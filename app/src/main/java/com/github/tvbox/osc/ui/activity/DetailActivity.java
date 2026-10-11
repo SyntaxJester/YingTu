@@ -1,0 +1,129 @@
+package com.github.tvbox.osc.ui.activity;
+
+import android.content.Intent;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.github.tvbox.osc.R;
+import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.bean.VodInfo;
+import com.github.tvbox.osc.ui.adapter.SeriesAdapter;
+import com.github.tvbox.osc.ui.adapter.SeriesFlagAdapter;
+import com.github.tvbox.osc.viewmodel.SourceViewModel;
+
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+
+/**
+ * 详情页：顶部封面 + 影片信息，中部线路切换，底部选集网格。
+ * 点击某一集 → 跳转 PlayActivity 播放。
+ */
+public class DetailActivity extends BaseActivity {
+
+    public static final String KEY_SOURCE = "sourceKey";
+    public static final String KEY_VOD_ID = "vodId";
+
+    private SourceViewModel viewModel;
+    private SeriesFlagAdapter flagAdapter;
+    private SeriesAdapter seriesAdapter;
+    private ProgressBar progress;
+
+    private VodInfo vodInfo;
+    private String sourceKey;
+    private String vodId;
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_detail;
+    }
+
+    @Override
+    protected void init() {
+        sourceKey = getIntent().getStringExtra(KEY_SOURCE);
+        vodId = getIntent().getStringExtra(KEY_VOD_ID);
+
+        progress = find(R.id.progress);
+        find(R.id.ivBack).setOnClickListener(v -> finish());
+
+        RecyclerView rvFlag = find(R.id.rvFlag);
+        rvFlag.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(
+                this, RecyclerView.HORIZONTAL, false));
+        flagAdapter = new SeriesFlagAdapter();
+        flagAdapter.setOnFlagSelected(this::onFlagSelected);
+        rvFlag.setAdapter(flagAdapter);
+
+        RecyclerView rvSeries = find(R.id.rvSeries);
+        rvSeries.setLayoutManager(new GridLayoutManager(this, 5));
+        seriesAdapter = new SeriesAdapter();
+        seriesAdapter.setOnSeriesClick(this::playSeries);
+        rvSeries.setAdapter(seriesAdapter);
+
+        viewModel = new ViewModelProvider(this).get(SourceViewModel.class);
+        viewModel.detailResult.observe(this, this::bind);
+
+        progress.setVisibility(View.VISIBLE);
+        viewModel.getDetail(sourceKey, vodId);
+    }
+
+    private void bind(VodInfo info) {
+        progress.setVisibility(View.GONE);
+        if (info == null) {
+            ((TextView) find(R.id.tvName)).setText("加载失败");
+            return;
+        }
+        this.vodInfo = info;
+
+        ((TextView) find(R.id.tvName)).setText(info.name);
+        setText(R.id.tvSub, join(" · ", info.year, info.area, info.type));
+        setText(R.id.tvActor, TextUtils.isEmpty(info.actor) ? "" : "主演：" + info.actor);
+        setText(R.id.tvDirector, TextUtils.isEmpty(info.director) ? "" : "导演：" + info.director);
+        setText(R.id.tvDesc, TextUtils.isEmpty(info.des) ? "暂无简介" : info.des);
+
+        ImageView iv = find(R.id.ivPoster);
+        Glide.with(this).load(info.pic)
+                .placeholder(R.drawable.bg_poster_placeholder)
+                .centerCrop().into(iv);
+
+        flagAdapter.submit(info.seriesFlags);
+        if (!info.seriesFlags.isEmpty()) {
+            onFlagSelected(0);
+        }
+    }
+
+    private void onFlagSelected(int index) {
+        vodInfo.playFlag = index;
+        flagAdapter.setSelected(index);
+        seriesAdapter.submit(vodInfo.seriesFlags.get(index).list);
+    }
+
+    private void playSeries(int seriesIndex) {
+        VodInfo.VodSeriesFlag flag = vodInfo.seriesFlags.get(vodInfo.playFlag);
+        VodInfo.VodSeries series = flag.list.get(seriesIndex);
+
+        Intent i = new Intent(this, PlayActivity.class);
+        i.putExtra(PlayActivity.KEY_TITLE, vodInfo.name + " " + series.name);
+        i.putExtra(PlayActivity.KEY_URL, series.url);
+        i.putExtra(PlayActivity.KEY_SOURCE, sourceKey);
+        startActivity(i);
+    }
+
+    private void setText(int id, String text) {
+        ((TextView) find(id)).setText(text == null ? "" : text);
+    }
+
+    private static String join(String sep, String... parts) {
+        StringBuilder sb = new StringBuilder();
+        for (String p : parts) {
+            if (TextUtils.isEmpty(p)) continue;
+            if (sb.length() > 0) sb.append(sep);
+            sb.append(p);
+        }
+        return sb.toString();
+    }
+}

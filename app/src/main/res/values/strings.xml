@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">影图+</string>
+    <string name="source_default">请选择源</string>
+
+    <string name="menu_source">视频源</string>
+    <string name="menu_history">观看历史</string>
+    <string name="menu_setting">设置</string>
+    <string name="menu_about">关于</string>
+
+    <string name="label_source">线路</string>
+    <string name="label_episodes">选集</string>
+    <string name="label_desc">简介</string>
+
+    <string name="title_source">视频源</string>
+    <string name="title_search">搜索</string>
+    <string name="title_history">观看历史</string>
+    <string name="title_setting">设置</string>
+
+    <string name="hint_source_url">输入 TVBox 订阅地址 (json)</string>
+    <string name="hint_search">搜索影片</string>
+    <string name="action_search">搜索</string>
+    <string name="action_load">加载</string>
+
+    <string name="setting_dark_mode">深色模式</string>
+    <string name="setting_clear_cache">清除缓存</string>
+
+    <string name="empty_default">暂无内容，请在「我的」中配置视频源</string>
+    <string name="empty_search">暂无搜索结果</string>
+    <string name="empty_history">还没有观看记录</string>
+</resources>
