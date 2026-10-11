@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>影图+ WebHome 能力演示</title>
+  <script>
+    (function () {
+      if (!Array.prototype.forEach) {
+        Array.prototype.forEach = function (fn, t) {
+          for (var i = 0; i < this.length; i += 1) if (i in this) fn.call(t, this[i], i, this);
+        };
+      }
+      if (!Element.prototype.closest) {
+        Element.prototype.closest = function (sel) {
+          var n = this;
+          while (n && n.nodeType === 1) { if (n.matches && n.matches(sel)) return n; n = n.parentElement; }
+          return null;
+        };
+      }
+      var cls = " webhome-ready";
+      if (!window.CSS || !CSS.supports || !CSS.supports("top", "calc(1px + 1px)")) cls += " no-css-functions";
+      document.documentElement.className += cls;
+    })();
+  </script>
+  <style>
+    :root {
+      --fm-web-height: 100vh;
+      --fm-safe-top: 0px;
+      --fm-safe-bottom: 0px;
+      --accent: #2BC4D8;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      min-height: var(--fm-web-height, 100vh);
+      margin: 0; color: #eefaff;
+      font: 14px/1.6 system-ui, -apple-system, "PingFang SC", "Microsoft Yahei", sans-serif;
+      background: transparent;
+    }
+    html:not(.fm-native) body { background: linear-gradient(160deg, #2d7fa0, #0f4a66); }
+    .app { padding: 16px; padding-top: calc(14px + var(--fm-safe-top)); padding-bottom: calc(24px + var(--fm-safe-bottom)); }
+    h1 { font-size: 19px; margin: 0 0 2px; }
+    .sub { color: #bfe3ee; font-size: 12px; margin: 0 0 14px; }
+    .panel {
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 12px; padding: 13px 14px; margin-bottom: 12px;
+      background: rgba(255,255,255,0.08);
+    }
+    .panel h2 { font-size: 14px; margin: 0 0 4px; color: #d9f4fa; }
+    .panel p { margin: 0 0 10px; font-size: 12px; color: #a9d2df; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      padding: 9px 13px; border: 0; border-radius: 9px; cursor: pointer;
+      background: rgba(43,196,216,0.22); color: #e9fdff; font-size: 13px; font-weight: 600;
+    }
+    button:active { background: var(--accent); color: #06202A; }
+    button.primary { background: var(--accent); color: #06202A; }
+    input {
+      padding: 9px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.07); color: #fff; font-size: 13px; width: 100%;
+      margin-bottom: 8px;
+    }
+    pre {
+      margin: 10px 0 0; padding: 10px; border-radius: 8px;
+      background: rgba(0,0,0,0.32); color: #cdeef5; font-size: 11px;
+      max-height: 160px; overflow: auto; white-space: pre-wrap; word-break: break-all;
+    }
+    .foot { text-align: center; color: #86b9c8; font-size: 11px; margin-top: 20px; line-height: 1.8; }
+    .tag { display:inline-block; padding:1px 7px; border-radius:8px; font-size:10px; background:rgba(43,196,216,0.25); margin-left:6px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>WebHome 能力演示<span class="tag" id="env">预览</span></h1>
+    <p class="sub">逐个演示 window.fm 暴露的 Native SDK 接口</p>
+
+    <div class="panel">
+      <h2>设备 / 站点 / 配置</h2>
+      <p>fm.device() · fm.site() · fm.config()</p>
+      <div class="row">
+        <button data-act="device">fm.device</button>
+        <button data-act="site">fm.site</button>
+        <button data-act="config">fm.config</button>
+      </div>
+      <pre id="out-info">点击上面按钮查看返回</pre>
+    </div>
+
+    <div class="panel">
+      <h2>网络请求（绕过 CORS）</h2>
+      <p>fm.req() 用 Native OkHttp 请求，不受浏览器跨域限制</p>
+      <input id="reqUrl" value="https://httpbin.org/get" />
+      <div class="row">
+        <button data-act="req" class="primary">fm.req 发送</button>
+      </div>
+      <pre id="out-req">—</pre>
+    </div>
+
+    <div class="panel">
+      <h2>搜索与播放</h2>
+      <p>fm.search() 进原生搜索；fm.play() 播放直链；fm.vodInline() 临时多集</p>
+      <input id="kw" value="仙逆" />
+      <div class="row">
+        <button data-act="search">fm.search</button>
+        <button data-act="play">fm.play 测试直链</button>
+        <button data-act="inline">fm.vodInline</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>缓存（跨重启持久化）</h2>
+      <p>fm.cache.set / get / del（Native Prefers 存储）</p>
+      <input id="cacheVal" value="hello-webhome" />
+      <div class="row">
+        <button data-act="cache-set">set</button>
+        <button data-act="cache-get">get</button>
+        <button data-act="cache-del">del</button>
+      </div>
+      <pre id="out-cache">—</pre>
+    </div>
+
+    <div class="panel">
+      <h2>最近观看</h2>
+      <div class="row"><button data-act="history" class="primary">fm.history</button></div>
+      <pre id="out-hist">—</pre>
+    </div>
+
+    <div class="foot">影图+ · WebHome DevKit 演示页<br>可照此结构开发你自己的 HTML 首页</div>
+  </main>
+
+  <script>
+    (function () {
+      function show(id, data) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+      }
+      function need() {
+        if (!window.fm) { alert("预览模式：请在影图+ App 内打开"); return false; }
+        return true;
+      }
+
+      var handlers = {
+        device: function () { fm.device().then(function (d) { show("out-info", d); }); },
+        site: function () { fm.site().then(function (d) { show("out-info", d); }); },
+        config: function () { fm.config().then(function (d) { show("out-info", d); }); },
+        req: function () {
+          var url = document.getElementById("reqUrl").value.trim();
+          show("out-req", "请求中…");
+          fm.req(url, { responseType: "json", timeout: 20 }).then(function (r) {
+            show("out-req", r);
+          }).catch(function (e) { show("out-req", "错误：" + (e && e.message)); });
+        },
+        search: function () {
+          var kw = document.getElementById("kw").value.trim();
+          if (kw) fm.search(kw, { direct: true });
+        },
+        play: function () {
+          fm.play("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", "HLS 测试流", {});
+        },
+        inline: function () {
+          fm.vodInline({
+            vod_name: "WebHome 临时多集演示",
+            mark: "02",
+            vod_play_from: "WebHome",
+            episodes: [
+              { name: "01", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+              { name: "02", url: "https://test-streams.mux.dev/pts_shift/master.m3u8" }
+            ]
+          });
+        },
+        "cache-set": function () {
+          fm.cache.set("demo_key", document.getElementById("cacheVal").value, "webhome")
+            .then(function () { show("out-cache", "已写入 demo_key"); });
+        },
+        "cache-get": function () {
+          fm.cache.get("demo_key", "webhome").then(function (v) {
+            show("out-cache", "读取：" + (v || "(空)"));
+          });
+        },
+        "cache-del": function () {
+          fm.cache.del("demo_key", "webhome").then(function () { show("out-cache", "已删除 demo_key"); });
+        },
+        history: function () {
+          show("out-hist", "读取中…");
+          fm.history().then(function (list) {
+            show("out-hist", (list && list.length) ? list : "(暂无记录)");
+          }).catch(function (e) { show("out-hist", "错误：" + (e && e.message)); });
+        }
+      };
+
+      document.addEventListener("click", function (event) {
+        var btn = event.target.closest ? event.target.closest("[data-act]") : null;
+        if (!btn) return;
+        var act = btn.getAttribute("data-act");
+        if (!need()) return;
+        try { handlers[act] && handlers[act](); }
+        catch (e) { alert("调用失败：" + (e && e.message)); }
+      });
+
+      window.addEventListener("fmsdk", function () {
+        document.documentElement.classList.add("fm-native");
+        var b = document.getElementById("env");
+        if (b) b.textContent = "App · " + (window.fongmiClient ? window.fongmiClient.mode : "");
+      });
+      if (window.fm && document.getElementById("env")) document.getElementById("env").textContent = "App";
+    })();
+  </script>
+</body>
+</html>

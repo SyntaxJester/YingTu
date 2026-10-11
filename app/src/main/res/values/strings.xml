@@ -33,11 +33,13 @@
     <string name="empty_history">还没有观看记录</string>
     <string name="empty_links">还没有收藏的直链\n点击右下角 + 添加可直接播放的地址</string>
     <string name="empty_fav_vod">还没有收藏的影片\n在详情页点收藏即可加入这里</string>
+    <string name="empty_webhome">还没有网页首页\n点击右下角 + 添加网址或选择本地 .html 文件\n（内置示例演示 WebHome Native SDK 能力）</string>
     <string name="badge_douban">豆瓣热播</string>
 
     <!-- 首页快捷入口 -->
     <string name="quick_history">历史</string>
     <string name="quick_live">直播</string>
+    <string name="quick_web">网页</string>
     <string name="quick_file">文件</string>
     <string name="quick_source">站源</string>
     <string name="quick_search">搜索</string>

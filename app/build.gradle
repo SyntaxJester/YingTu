@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    namespace 'com.github.tvbox.osc'
+    namespace 'com.yingtu.plus'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.github.yingtu"
-        minSdk 21
+        applicationId "com.yingtu.plus"
+        minSdk 24
         targetSdk 34
-        versionCode 5
-        versionName "1.4.0"
+        versionCode 6
+        versionName "1.5.0"
         vectorDrawables.useSupportLibrary = true
     }
 
