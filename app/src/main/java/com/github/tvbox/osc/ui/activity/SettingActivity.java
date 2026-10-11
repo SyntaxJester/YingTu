@@ -52,7 +52,7 @@ public class SettingActivity extends BaseActivity {
             ((TextView) find(R.id.tvCacheHint)).setText("已清除");
         });
 
-        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.1.0");
+        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.2.0");
     }
 
     private void refreshParseName() {
