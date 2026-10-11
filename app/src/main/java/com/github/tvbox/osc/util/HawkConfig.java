@@ -13,4 +13,6 @@ public class HawkConfig {
     public static final String HOME_REC = "home_rec";
     public static final String DEFAULT_PARSE = "default_parse";
     public static final String GRID_COLUMNS = "grid_columns";
+    public static final String FAV_LINKS = "fav_links";
+    public static final String FAV_VODS = "fav_vods";
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">影图+</string>
+    <string name="home_title">影图 - 本地</string>
     <string name="source_default">请选择源</string>
 
     <string name="menu_source">视频源</string>
@@ -30,6 +31,8 @@
     <string name="empty_default">暂无内容，请在「我的」中配置视频源</string>
     <string name="empty_search">暂无搜索结果</string>
     <string name="empty_history">还没有观看记录</string>
+    <string name="empty_links">还没有收藏的直链\n点击右下角 + 添加可直接播放的地址</string>
+    <string name="empty_fav_vod">还没有收藏的影片\n在详情页点收藏即可加入这里</string>
     <string name="badge_douban">豆瓣热播</string>
 
     <!-- 首页快捷入口 -->

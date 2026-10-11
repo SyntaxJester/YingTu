@@ -12,10 +12,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.bean.FavVod;
 import com.github.tvbox.osc.bean.History;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.ui.adapter.SeriesAdapter;
 import com.github.tvbox.osc.ui.adapter.SeriesFlagAdapter;
+import com.github.tvbox.osc.util.FavHelper;
 import com.github.tvbox.osc.util.HistoryHelper;
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 
@@ -52,6 +54,9 @@ public class DetailActivity extends BaseActivity {
 
         progress = find(R.id.progress);
         find(R.id.ivBack).setOnClickListener(v -> finish());
+        find(R.id.ivFav).setOnClickListener(v -> toggleFav());
+        find(R.id.ivShare).setOnClickListener(v -> shareVod());
+        refreshFavIcon();
 
         RecyclerView rvFlag = find(R.id.rvFlag);
         rvFlag.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(
@@ -131,6 +136,32 @@ public class DetailActivity extends BaseActivity {
 
     private void setText(int id, String text) {
         ((TextView) find(id)).setText(text == null ? "" : text);
+    }
+
+    private void refreshFavIcon() {
+        boolean fav = FavHelper.isFav(sourceKey, vodId);
+        ((ImageView) find(R.id.ivFav)).setImageResource(
+                fav ? R.drawable.ic_fav_on : R.drawable.ic_fav_off);
+    }
+
+    private void toggleFav() {
+        String name = vodInfo != null ? vodInfo.name : "";
+        String pic = vodInfo != null ? vodInfo.pic : "";
+        FavHelper.toggleVod(new FavVod(sourceKey, vodId, name, pic));
+        refreshFavIcon();
+        boolean fav = FavHelper.isFav(sourceKey, vodId);
+        android.widget.Toast.makeText(this, fav ? "已收藏" : "已取消收藏",
+                android.widget.Toast.LENGTH_SHORT).show();
+    }
+
+    private void shareVod() {
+        String name = vodInfo != null ? vodInfo.name : "影片";
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, name);
+        send.putExtra(Intent.EXTRA_TEXT, "【影图+ 推荐】" + name
+                + "\n来源：" + sourceKey + "\n影片ID：" + vodId);
+        startActivity(Intent.createChooser(send, "分享影片"));
     }
 
     private static String join(String sep, String... parts) {
