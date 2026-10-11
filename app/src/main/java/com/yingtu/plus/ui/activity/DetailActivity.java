@@ -128,6 +128,7 @@ public class DetailActivity extends BaseActivity {
         i.putExtra(PlayActivity.KEY_VOD_NAME, vodInfo.name);
         i.putExtra(PlayActivity.KEY_VOD_PIC, vodInfo.pic);
         i.putExtra(PlayActivity.KEY_FLAG, vodInfo.playFlag);
+        i.putExtra(PlayActivity.KEY_FLAG_NAME, flag.name);
         i.putExtra(PlayActivity.KEY_INDEX, seriesIndex);
         i.putExtra(PlayActivity.KEY_EPISODE, series.name);
         i.putExtra(PlayActivity.KEY_POSITION, resume);

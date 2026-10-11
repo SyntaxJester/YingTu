@@ -18,24 +18,35 @@ import androidx.media3.ui.PlayerView;
 
 import com.yingtu.plus.R;
 import com.yingtu.plus.api.ApiConfig;
+import com.yingtu.plus.api.VodSpider;
 import com.yingtu.plus.base.BaseActivity;
 import com.yingtu.plus.bean.History;
 import com.yingtu.plus.bean.ParseBean;
+import com.yingtu.plus.bean.SourceBean;
 import com.yingtu.plus.player.ParseJob;
 import com.yingtu.plus.util.HistoryHelper;
+import com.yingtu.plus.util.OkGo;
 import com.yingtu.plus.util.Sniffer;
+import com.github.catvod.crawler.Spider;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * 播放页。使用 Media3 ExoPlayer 播放。
  *
- * 相比初版新增：
- *  1. 二次解析：若传入 url 不是直链（Sniffer.needParse），先走 {@link ParseJob}
- *     （JSON 接口解析 + WebView 网页嗅探）拿到真实直链再播放；
- *  2. 自定义请求头：解析结果带回的 UA/Referer/Cookie 用于播放；
- *  3. 观看历史：进入即写入/更新一条历史，退出时保存播放进度用于续播。
+ * 播放地址解析链路（关键修复）：
+ *  1. CSP 站点选集点进来时，{@code url} 往往不是直链，而是 Spider 的 episode id/标识。
+ *     需要先在后台线程调用 {@code spider.playerContent(flag, id, …)}，返回 JSON 里取
+ *     真实播放 url + header + 是否需二次解析（parse 字段）。
+ *  2. 若 playerContent 标记 parse==1 或返回的仍是网页地址，再走 {@link ParseJob}
+ *     （JSON 接口 / WebView 嗅探）解析成直链。
+ *  3. 普通直链或非 CSP 源保持原有逻辑。
  */
 @OptIn(markerClass = UnstableApi.class)
 public class PlayActivity extends BaseActivity {
@@ -43,11 +54,11 @@ public class PlayActivity extends BaseActivity {
     public static final String KEY_TITLE = "title";
     public static final String KEY_URL = "url";
     public static final String KEY_SOURCE = "sourceKey";
-    // 历史续播相关
     public static final String KEY_VOD_ID = "vodId";
     public static final String KEY_VOD_NAME = "vodName";
     public static final String KEY_VOD_PIC = "vodPic";
     public static final String KEY_FLAG = "playFlag";
+    public static final String KEY_FLAG_NAME = "playFlagName";
     public static final String KEY_INDEX = "playIndex";
     public static final String KEY_EPISODE = "episodeName";
     public static final String KEY_POSITION = "position";
@@ -84,7 +95,6 @@ public class PlayActivity extends BaseActivity {
         resolveAndPlay(url);
     }
 
-    /** 根据 Intent 构建/更新历史记录 */
     private void buildHistory() {
         String sourceKey = getIntent().getStringExtra(KEY_SOURCE);
         String vodId = getIntent().getStringExtra(KEY_VOD_ID);
@@ -122,35 +132,100 @@ public class PlayActivity extends BaseActivity {
         });
     }
 
-    /** 判断是否需要二次解析，决定直接播放还是先解析 */
+    /** 决定直接播放 / 走 CSP Spider 解析 / 走通用二次解析。 */
     private void resolveAndPlay(String url) {
         if (url == null || url.isEmpty()) {
             Toast.makeText(this, "播放地址为空", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (Sniffer.needParse(url)) {
-            loading.setVisibility(View.VISIBLE);
-            ParseBean parse = ApiConfig.get().getDefaultParse();
-            parseJob = ParseJob.create(new ParseJob.Callback() {
-                @Override
-                public void onParseSuccess(Map<String, String> headers, String directUrl) {
-                    play(directUrl, headers);
-                }
+        loading.setVisibility(View.VISIBLE);
 
-                @Override
-                public void onParseError() {
-                    loading.setVisibility(View.GONE);
-                    Toast.makeText(PlayActivity.this,
-                            "解析失败，该资源可能需要专用解析接口", Toast.LENGTH_LONG).show();
-                }
-            }).start(parse, url);
+        String sourceKey = getIntent().getStringExtra(KEY_SOURCE);
+        SourceBean source = sourceKey == null ? null : ApiConfig.get().getSource(sourceKey);
+
+        if (source != null && VodSpider.isCsp(source)) {
+            resolveCsp(source, url);
         } else {
-            play(url, new HashMap<>());
+            // 非 CSP：直接判断是否要通用二次解析
+            afterUrlResolved(url, new HashMap<>());
         }
+    }
+
+    /** CSP 站点：spider.playerContent 拿真实直链。 */
+    private void resolveCsp(SourceBean source, String episodeUrl) {
+        String flagName = getIntent().getStringExtra(KEY_FLAG_NAME);
+        final String flag = flagName == null ? "" : flagName;
+        VodSpider.executor().execute(() -> {
+            String playUrl = episodeUrl;
+            Map<String, String> headers = new HashMap<>();
+            boolean needParse = false;
+            try {
+                Spider spider = VodSpider.get(source);
+                List<String> vipFlags = new ArrayList<>();
+                String json = spider.playerContent(flag, episodeUrl, vipFlags);
+                if (json != null && json.trim().startsWith("{")) {
+                    JsonObject o = JsonParser.parseString(json).getAsJsonObject();
+                    String u = optString(o, "url");
+                    if (!u.isEmpty()) playUrl = u;
+                    // parse==1 表示返回的是网页，需要再嗅探
+                    if (o.has("parse") && !o.get("parse").isJsonNull()) {
+                        try { needParse = o.get("parse").getAsInt() == 1; } catch (Throwable ignored) {}
+                    }
+                    // header 可能是对象或字符串
+                    if (o.has("header")) headers.putAll(parseHeader(o.get("header")));
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            final String finalUrl = playUrl;
+            final Map<String, String> finalHeaders = headers;
+            final boolean finalNeedParse = needParse;
+            OkGo.main(() -> {
+                if (finalNeedParse || Sniffer.needParse(finalUrl)) {
+                    runParse(finalUrl, finalHeaders);
+                } else {
+                    play(finalUrl, finalHeaders);
+                }
+            });
+        });
+    }
+
+    /** 非 CSP / CSP 返回仍是网页时的通用二次解析。 */
+    private void afterUrlResolved(String url, Map<String, String> headers) {
+        if (Sniffer.needParse(url)) {
+            runParse(url, headers);
+        } else {
+            play(url, headers);
+        }
+    }
+
+    private void runParse(String url, Map<String, String> baseHeaders) {
+        loading.setVisibility(View.VISIBLE);
+        ParseBean parse = ApiConfig.get().getDefaultParse();
+        parseJob = ParseJob.create(new ParseJob.Callback() {
+            @Override
+            public void onParseSuccess(Map<String, String> headers, String directUrl) {
+                Map<String, String> merged = new HashMap<>(baseHeaders);
+                if (headers != null) merged.putAll(headers);
+                play(directUrl, merged);
+            }
+
+            @Override
+            public void onParseError() {
+                loading.setVisibility(View.GONE);
+                Toast.makeText(PlayActivity.this,
+                        "解析失败，该资源可能需要专用解析接口", Toast.LENGTH_LONG).show();
+            }
+        }).start(parse, url);
     }
 
     private void play(String url, Map<String, String> headers) {
         if (isFinishing() || player == null) return;
+        if (url == null || url.isEmpty()) {
+            loading.setVisibility(View.GONE);
+            Toast.makeText(this, "未取得可播放地址", Toast.LENGTH_SHORT).show();
+            return;
+        }
         MediaItem item = new MediaItem.Builder()
                 .setUri(Uri.parse(url))
                 .setMediaMetadata(new MediaMetadata.Builder()
@@ -175,7 +250,6 @@ public class PlayActivity extends BaseActivity {
         player.setPlayWhenReady(true);
     }
 
-    /** 保存播放进度到历史 */
     private void saveProgress() {
         if (history == null || player == null) return;
         long pos = player.getCurrentPosition();
@@ -206,5 +280,29 @@ public class PlayActivity extends BaseActivity {
             player.release();
             player = null;
         }
+    }
+
+    // ===== helpers =====
+
+    private static String optString(JsonObject o, String key) {
+        return o.has(key) && !o.get(key).isJsonNull() ? o.get(key).getAsString() : "";
+    }
+
+    private static Map<String, String> parseHeader(JsonElement el) {
+        Map<String, String> map = new HashMap<>();
+        try {
+            if (el.isJsonObject()) {
+                for (Map.Entry<String, JsonElement> e : el.getAsJsonObject().entrySet()) {
+                    if (!e.getValue().isJsonNull()) map.put(e.getKey(), e.getValue().getAsString());
+                }
+            } else if (el.isJsonPrimitive()) {
+                JsonObject o = JsonParser.parseString(el.getAsString()).getAsJsonObject();
+                for (Map.Entry<String, JsonElement> e : o.entrySet()) {
+                    if (!e.getValue().isJsonNull()) map.put(e.getKey(), e.getValue().getAsString());
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return map;
     }
 }

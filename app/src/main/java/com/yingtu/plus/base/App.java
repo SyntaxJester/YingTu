@@ -21,6 +21,8 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        // CatVod 运行时需要 Context（Path/Prefers/Asset 等都读 Init.context()）
+        com.github.catvod.Init.set(this);
         // 轻量级 KV 持久化
         Hawk.init(this).build();
         // 应用深色模式偏好（默认跟随深色，契合海洋深蓝主题）

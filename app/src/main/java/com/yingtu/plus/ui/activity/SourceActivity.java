@@ -56,7 +56,14 @@ public class SourceActivity extends BaseActivity {
         adapter.setOnSourceClick(source -> {
             ApiConfig.get().setSourceBean(source);
             adapter.setCurrentKey(source.getKey());
+            // 预加载该配置的 spider jar（CSP 站点首次进入会用到），后台执行
+            final String spiderJar = ApiConfig.get().getSpider();
+            if (spiderJar != null && !spiderJar.isEmpty()) {
+                OkGo.io(() -> com.yingtu.plus.api.SpiderManager.get().parseJar(spiderJar));
+            }
             Toast.makeText(this, "已切换：" + source.getName(), Toast.LENGTH_SHORT).show();
+            // 切源后回首页会自动刷新内容（HomeMainFragment.onVisible 比对 sourceKey）
+            finish();
         });
         rv.setAdapter(adapter);
 
@@ -95,6 +102,11 @@ public class SourceActivity extends BaseActivity {
                         ApiConfig.get().parseConfig(body);
                         Hawk.put(HawkConfig.API_URL, url.trim());
                         Hawk.put(HawkConfig.API_CONFIG_CACHE, body);
+                        // 预加载 spider jar（csp 站点需要），后台执行避免卡 UI
+                        final String spiderJar = ApiConfig.get().getSpider();
+                        if (spiderJar != null && !spiderJar.isEmpty()) {
+                            OkGo.io(() -> com.yingtu.plus.api.SpiderManager.get().parseJar(spiderJar));
+                        }
                         refreshList();
                         Toast.makeText(SourceActivity.this,
                                 "解析成功，共 " + ApiConfig.get().getSourceBeanList().size() + " 个源",

@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.github.catvod.crawler'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 34
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    api 'androidx.annotation:annotation:1.7.1'
+    api 'androidx.collection:collection:1.4.0'
+    api 'androidx.preference:preference:1.2.1'
+    api 'com.google.code.gson:gson:2.10.1'
+    api 'com.google.guava:guava:33.3.1-android'
+    api 'com.orhanobut:logger:2.2.0'
+    api 'com.squareup.okhttp3:okhttp:5.4.0'
+    api 'com.squareup.okhttp3:okhttp-dnsoverhttps:5.4.0'
+    api 'com.squareup.okhttp3:logging-interceptor:5.4.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.4'
+}

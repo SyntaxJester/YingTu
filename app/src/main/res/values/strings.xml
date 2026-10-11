@@ -34,6 +34,7 @@
     <string name="empty_links">还没有收藏的直链\n点击右下角 + 添加可直接播放的地址</string>
     <string name="empty_fav_vod">还没有收藏的影片\n在详情页点收藏即可加入这里</string>
     <string name="empty_webhome">还没有网页首页\n点击右下角 + 添加网址或选择本地 .html 文件\n（内置示例演示 WebHome Native SDK 能力）</string>
+    <string name="home_no_source">还没有选择视频源\n点击上方「站源」添加 TVBox 订阅并选择一个源</string>
     <string name="badge_douban">豆瓣热播</string>
 
     <!-- 首页快捷入口 -->

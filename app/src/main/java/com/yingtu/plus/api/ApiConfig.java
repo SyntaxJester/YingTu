@@ -85,8 +85,7 @@ public class ApiConfig {
                 sb.setSearchable(optInt(obj, "searchable", 1));
                 sb.setQuickSearch(optInt(obj, "quickSearch", 1));
                 sb.setFilterable(optInt(obj, "filterable", 1));
-                sb.setExt(obj.has("ext") && obj.get("ext").isJsonPrimitive()
-                        ? obj.get("ext").getAsString() : "");
+                sb.setExt(parseExt(obj));
                 sb.setJar(optString(obj, "jar"));
                 sb.setPlayerUrl(optString(obj, "playUrl"));
                 sourceBeanList.put(sb.getKey(), sb);
@@ -228,6 +227,14 @@ public class ApiConfig {
 
     private static String optString(JsonObject obj, String key) {
         return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : "";
+    }
+
+    /** ext 可能是字符串（URL/base64）或对象（如 {"config":"AppV7Dsx"}），统一转成字符串给 Spider.init。 */
+    private static String parseExt(JsonObject obj) {
+        if (!obj.has("ext") || obj.get("ext").isJsonNull()) return "";
+        JsonElement ext = obj.get("ext");
+        if (ext.isJsonPrimitive()) return ext.getAsString();
+        return ext.toString(); // 对象/数组原样序列化
     }
 
     private static int optInt(JsonObject obj, String key) {

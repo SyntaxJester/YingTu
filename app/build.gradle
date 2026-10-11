@@ -9,9 +9,9 @@ android {
     defaultConfig {
         applicationId "com.yingtu.plus"
         minSdk 24
-        targetSdk 34
-        versionCode 6
-        versionName "1.5.0"
+        targetSdk 28
+        versionCode 7
+        versionName "1.6.0"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -27,12 +27,24 @@ android {
     }
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/*.kotlin_module', 'META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST']
+        }
     }
 }
 
 dependencies {
+    // CatVod spider runtime (csp_ JAR 加载 + 代理) 与 QuickJS JS Spider 运行时
+    implementation project(':catvod')
+    implementation project(':quickjs')
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.4'
+
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
