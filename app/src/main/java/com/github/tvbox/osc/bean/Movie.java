@@ -17,6 +17,8 @@ public class Movie implements Serializable {
     public String director;
     public String content; // 剧情简介
     public String sourceKey;
+    public String rate;    // 评分（如豆瓣 7.5），空则不显示
+    public boolean douban; // 是否豆瓣热播角标
 
     public Movie() {}
 

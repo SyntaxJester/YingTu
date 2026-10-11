@@ -12,4 +12,5 @@ public class HawkConfig {
     public static final String DARK_MODE = "dark_mode";
     public static final String HOME_REC = "home_rec";
     public static final String DEFAULT_PARSE = "default_parse";
+    public static final String GRID_COLUMNS = "grid_columns";
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="54dp"
+    android:layout_margin="5dp"
+    android:background="@drawable/bg_frost_button"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:foreground="?attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        app:tint="@color/text_primary"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <TextView
+        android:id="@+id/tvLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp" />
+</LinearLayout>

@@ -5,9 +5,10 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorOnPrimary">@color/colorOnPrimary</item>
         <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
-        <item name="android:statusBarColor">@color/bg_page</item>
-        <item name="android:navigationBarColor">@color/bg_page</item>
-        <item name="android:windowBackground">@color/bg_page</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@drawable/bg_main_gradient</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:forceDarkAllowed">false</item>
     </style>
 
@@ -19,7 +20,7 @@
         <item name="android:windowContentOverlay">@null</item>
     </style>
 
-    <!-- 圆角卡片 -->
+    <!-- 圆角卡片 ShapeAppearance -->
     <style name="RoundedCard" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
@@ -28,5 +29,101 @@
     <style name="RoundedPoster" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">10dp</item>
+    </style>
+
+    <!-- ===== 设置页样式 ===== -->
+
+    <!-- 分区标题行（图标标题 + 右侧小按钮） -->
+    <style name="SettingSectionHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_marginTop">18dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:paddingStart">4dp</item>
+    </style>
+
+    <style name="SettingSectionTitle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:drawableStart">@drawable/ic_section</item>
+    </style>
+
+    <style name="SettingHeaderBtn">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:background">@drawable/bg_frost_button</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- 卡片容器 -->
+    <style name="SettingCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_frost_row</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">10dp</item>
+    </style>
+
+    <!-- 单行设置项 -->
+    <style name="SettingRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">50dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <style name="SettingLabel">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="SettingValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/value_teal</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:maxWidth">180dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="SettingArrow">
+        <item name="android:layout_width">18dp</item>
+        <item name="android:layout_height">18dp</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:src">@drawable/ic_arrow_right</item>
+    </style>
+
+    <style name="SettingSep">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0.5dp</item>
+        <item name="android:background">@color/divider</item>
+    </style>
+
+    <style name="SettingBottomBtn">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_frost_row</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">15sp</item>
     </style>
 </resources>

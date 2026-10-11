@@ -1,4 +1,4 @@
-package com.github.tvbox.osc.ui.fragment;
+package com.github.tvbox.osc.ui.activity;
 
 import android.content.Intent;
 import android.view.View;
@@ -11,10 +11,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.api.LiveParser;
-import com.github.tvbox.osc.base.BaseLazyFragment;
+import com.github.tvbox.osc.base.BaseActivity;
 import com.github.tvbox.osc.bean.LiveChannel;
 import com.github.tvbox.osc.bean.LiveGroup;
-import com.github.tvbox.osc.ui.activity.LivePlayActivity;
 import com.github.tvbox.osc.ui.adapter.LiveChannelAdapter;
 import com.github.tvbox.osc.ui.adapter.LiveGroupAdapter;
 import com.github.tvbox.osc.util.OkGo;
@@ -33,7 +32,7 @@ import okhttp3.Response;
  * 从配置里的 lives 地址拉取 m3u / txt 频道列表（LiveParser 解析），
  * 点击频道跳转 LivePlayActivity 播放。
  */
-public class LiveFragment extends BaseLazyFragment {
+public class LiveActivity extends BaseActivity {
 
     private ProgressBar progress;
     private TextView tvEmpty;
@@ -44,29 +43,27 @@ public class LiveFragment extends BaseLazyFragment {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.fragment_live;
+        return R.layout.activity_live;
     }
 
     @Override
-    protected void init(View root) {
-        progress = root.findViewById(R.id.progress);
-        tvEmpty = root.findViewById(R.id.tvEmpty);
+    protected void init() {
+        progress = find(R.id.progress);
+        tvEmpty = find(R.id.tvEmpty);
+        find(R.id.ivBack).setOnClickListener(v -> finish());
 
-        RecyclerView rvGroup = root.findViewById(R.id.rvGroup);
-        rvGroup.setLayoutManager(new LinearLayoutManager(getContext()));
+        RecyclerView rvGroup = find(R.id.rvGroup);
+        rvGroup.setLayoutManager(new LinearLayoutManager(this));
         groupAdapter = new LiveGroupAdapter();
         groupAdapter.setOnGroupSelected(this::showGroup);
         rvGroup.setAdapter(groupAdapter);
 
-        RecyclerView rvChannel = root.findViewById(R.id.rvChannel);
-        rvChannel.setLayoutManager(new LinearLayoutManager(getContext()));
+        RecyclerView rvChannel = find(R.id.rvChannel);
+        rvChannel.setLayoutManager(new LinearLayoutManager(this));
         channelAdapter = new LiveChannelAdapter();
         channelAdapter.setOnChannelClick(this::playChannel);
         rvChannel.setAdapter(channelAdapter);
-    }
 
-    @Override
-    protected void lazyLoad() {
         loadLives();
     }
 
@@ -78,7 +75,6 @@ public class LiveFragment extends BaseLazyFragment {
         }
         progress.setVisibility(View.VISIBLE);
         tvEmpty.setVisibility(View.GONE);
-        // 取第一个直播地址
         String url = urls.get(0);
         Request request = new Request.Builder().url(url).build();
         OkGo.client().newCall(request).enqueue(new okhttp3.Callback() {
@@ -117,7 +113,7 @@ public class LiveFragment extends BaseLazyFragment {
 
     private void playChannel(LiveChannel channel) {
         if (channel.urls.isEmpty()) return;
-        Intent i = new Intent(getActivity(), LivePlayActivity.class);
+        Intent i = new Intent(this, LivePlayActivity.class);
         i.putExtra(LivePlayActivity.KEY_NAME, channel.name);
         i.putExtra(LivePlayActivity.KEY_URL, channel.currentUrl());
         i.putExtra(LivePlayActivity.KEY_UA, channel.ua);

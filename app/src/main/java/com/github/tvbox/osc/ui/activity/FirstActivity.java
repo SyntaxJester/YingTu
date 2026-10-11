@@ -44,7 +44,7 @@ public class FirstActivity extends BaseActivity {
         anim.setFillAfter(true);
         ivLogo.startAnimation(anim);
 
-        tvVersion.setText("v1.2.0");
+        tvVersion.setText("v1.3.0");
 
         // 1.2 秒后跳转
         new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {

@@ -62,12 +62,23 @@ public class GridMovieAdapter extends RecyclerView.Adapter<GridMovieAdapter.VH> 
     public void onBindViewHolder(@NonNull VH h, int position) {
         Movie m = data.get(position);
         h.tvName.setText(m.name);
+
         if (m.note == null || m.note.isEmpty()) {
             h.tvNote.setVisibility(View.GONE);
         } else {
             h.tvNote.setVisibility(View.VISIBLE);
             h.tvNote.setText(m.note);
         }
+
+        if (m.rate == null || m.rate.isEmpty()) {
+            h.tvRating.setVisibility(View.GONE);
+        } else {
+            h.tvRating.setVisibility(View.VISIBLE);
+            h.tvRating.setText(m.rate);
+        }
+
+        h.tvBadge.setVisibility(m.douban ? View.VISIBLE : View.GONE);
+
         Context ctx = h.itemView.getContext();
         Glide.with(ctx)
                 .load(m.pic)
@@ -90,12 +101,16 @@ public class GridMovieAdapter extends RecyclerView.Adapter<GridMovieAdapter.VH> 
         ImageView ivPoster;
         TextView tvName;
         TextView tvNote;
+        TextView tvRating;
+        TextView tvBadge;
 
         VH(@NonNull View itemView) {
             super(itemView);
             ivPoster = itemView.findViewById(R.id.ivPoster);
             tvName = itemView.findViewById(R.id.tvName);
             tvNote = itemView.findViewById(R.id.tvNote);
+            tvRating = itemView.findViewById(R.id.tvRating);
+            tvBadge = itemView.findViewById(R.id.tvBadge);
         }
     }
 }

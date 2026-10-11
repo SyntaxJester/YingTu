@@ -30,4 +30,76 @@
     <string name="empty_default">暂无内容，请在「我的」中配置视频源</string>
     <string name="empty_search">暂无搜索结果</string>
     <string name="empty_history">还没有观看记录</string>
+    <string name="badge_douban">豆瓣热播</string>
+
+    <!-- 首页快捷入口 -->
+    <string name="quick_history">历史</string>
+    <string name="quick_live">直播</string>
+    <string name="quick_file">文件</string>
+    <string name="quick_source">站源</string>
+    <string name="quick_search">搜索</string>
+    <string name="quick_push">推送</string>
+    <string name="quick_cast">放映</string>
+    <string name="quick_setting">设置</string>
+
+    <!-- 设置分区标题 -->
+    <string name="sec_data">数据接口</string>
+    <string name="sec_home">首页和搜索</string>
+    <string name="sec_play">播放设置</string>
+    <string name="sec_system">系统设置</string>
+
+    <!-- 设置分区右侧小按钮 -->
+    <string name="act_api_setting">接口设置</string>
+    <string name="act_api_advanced">高级配置</string>
+    <string name="act_source_pin">站源置顶</string>
+    <string name="act_source_disable">站源禁用</string>
+
+    <!-- 数据接口 -->
+    <string name="row_api_url">接口地址</string>
+    <string name="row_inject">注入地址</string>
+    <string name="row_api_cache">接口缓存</string>
+
+    <!-- 首页和搜索 -->
+    <string name="row_start_source">启动站源</string>
+    <string name="row_home_rec">首页推荐</string>
+    <string name="row_search_show">搜索展示</string>
+
+    <!-- 播放设置 -->
+    <string name="row_detail_style">详情页样式</string>
+    <string name="row_progress_tag">进度标识</string>
+    <string name="row_player">默认播放器</string>
+    <string name="row_render">渲染方式</string>
+    <string name="row_scale">画面缩放</string>
+    <string name="row_skip_ad">解析跳过防盗</string>
+    <string name="row_auto_float">自动悬浮</string>
+
+    <!-- 系统设置 -->
+    <string name="row_orientation">屏幕方向</string>
+    <string name="row_start_page">默认启动</string>
+    <string name="row_grid_columns">分类视图列数</string>
+    <string name="row_auto_clear">自清播放缓存</string>
+
+    <!-- 底部按钮 -->
+    <string name="act_backup">数据备份</string>
+    <string name="act_clear_cache">清除缓存</string>
+    <string name="act_update">检测更新</string>
+    <string name="act_about">关于</string>
+
+    <!-- 取值 -->
+    <string name="val_not_set">未设置 </string>
+    <string name="val_off">关闭</string>
+    <string name="val_on">开启</string>
+    <string name="val_douban">豆瓣热播</string>
+    <string name="val_pic_text">图片｜文字</string>
+    <string name="val_detail_style">影音图片</string>
+    <string name="val_name">名称</string>
+    <string name="val_exo">ExoPlayer</string>
+    <string name="val_texture">TextureView</string>
+    <string name="val_fit">适应</string>
+    <string name="val_portrait">竖屏</string>
+    <string name="val_landscape">横屏</string>
+    <string name="val_home">首页</string>
+    <string name="val_columns3">3 列</string>
+    <string name="val_columns4">4 列</string>
+    <string name="val_columns5">5 列</string>
 </resources>

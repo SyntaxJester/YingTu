@@ -49,7 +49,7 @@ public class LiveGroupAdapter extends RecyclerView.Adapter<LiveGroupAdapter.VH> 
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_sort_tab, parent, false);
+                .inflate(R.layout.item_live_group, parent, false);
         return new VH(v);
     }
 

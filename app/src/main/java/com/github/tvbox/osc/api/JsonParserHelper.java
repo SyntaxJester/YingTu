@@ -62,6 +62,12 @@ public class JsonParserHelper {
                 m.note = getString(o, "vod_remarks");
                 m.year = getString(o, "vod_year");
                 m.sourceKey = sourceKey;
+                // 评分：优先 vod_douban_score，其次 vod_score
+                String rate = getString(o, "vod_douban_score");
+                if (TextUtils.isEmpty(rate)) rate = getString(o, "vod_score");
+                if (!TextUtils.isEmpty(rate) && !rate.equals("0") && !rate.equals("0.0")) {
+                    m.rate = rate;
+                }
                 list.add(m);
             }
         } catch (Throwable ignored) {
