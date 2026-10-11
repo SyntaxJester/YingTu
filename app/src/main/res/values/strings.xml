@@ -24,6 +24,8 @@
 
     <string name="setting_dark_mode">深色模式</string>
     <string name="setting_clear_cache">清除缓存</string>
+    <string name="setting_default_parse">默认解析</string>
+    <string name="parse_none">未配置</string>
 
     <string name="empty_default">暂无内容，请在「我的」中配置视频源</string>
     <string name="empty_search">暂无搜索结果</string>

@@ -12,9 +12,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.bean.History;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.ui.adapter.SeriesAdapter;
 import com.github.tvbox.osc.ui.adapter.SeriesFlagAdapter;
+import com.github.tvbox.osc.util.HistoryHelper;
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 
 import android.widget.ImageView;
@@ -106,10 +108,24 @@ public class DetailActivity extends BaseActivity {
         VodInfo.VodSeriesFlag flag = vodInfo.seriesFlags.get(vodInfo.playFlag);
         VodInfo.VodSeries series = flag.list.get(seriesIndex);
 
+        // 若与历史记录是同一集，带上续播进度
+        long resume = 0;
+        History h = HistoryHelper.find(History.buildKey(sourceKey, vodId));
+        if (h != null && h.playFlag == vodInfo.playFlag && h.playIndex == seriesIndex) {
+            resume = h.position;
+        }
+
         Intent i = new Intent(this, PlayActivity.class);
         i.putExtra(PlayActivity.KEY_TITLE, vodInfo.name + " " + series.name);
         i.putExtra(PlayActivity.KEY_URL, series.url);
         i.putExtra(PlayActivity.KEY_SOURCE, sourceKey);
+        i.putExtra(PlayActivity.KEY_VOD_ID, vodId);
+        i.putExtra(PlayActivity.KEY_VOD_NAME, vodInfo.name);
+        i.putExtra(PlayActivity.KEY_VOD_PIC, vodInfo.pic);
+        i.putExtra(PlayActivity.KEY_FLAG, vodInfo.playFlag);
+        i.putExtra(PlayActivity.KEY_INDEX, seriesIndex);
+        i.putExtra(PlayActivity.KEY_EPISODE, series.name);
+        i.putExtra(PlayActivity.KEY_POSITION, resume);
         startActivity(i);
     }
 

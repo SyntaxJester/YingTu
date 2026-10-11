@@ -3,6 +3,7 @@ package com.github.tvbox.osc.api;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.github.tvbox.osc.bean.ParseBean;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.google.gson.JsonArray;
@@ -26,6 +27,8 @@ public class ApiConfig {
     private static ApiConfig instance;
 
     private final LinkedHashMap<String, SourceBean> sourceBeanList = new LinkedHashMap<>();
+    private final List<ParseBean> parseBeanList = new ArrayList<>();
+    private ParseBean mDefaultParse;
     private SourceBean mHomeSource;
     private String spider = "";
 
@@ -56,6 +59,7 @@ public class ApiConfig {
      */
     public void parseConfig(String json) {
         sourceBeanList.clear();
+        parseBeanList.clear();
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 
         if (root.has("spider")) {
@@ -77,9 +81,36 @@ public class ApiConfig {
                 sb.setExt(obj.has("ext") && obj.get("ext").isJsonPrimitive()
                         ? obj.get("ext").getAsString() : "");
                 sb.setJar(optString(obj, "jar"));
+                sb.setPlayerUrl(optString(obj, "playUrl"));
                 sourceBeanList.put(sb.getKey(), sb);
             }
         }
+
+        // 解析 parses（二次解析接口列表）
+        if (root.has("parses")) {
+            JsonArray parses = root.getAsJsonArray("parses");
+            for (JsonElement e : parses) {
+                JsonObject obj = e.getAsJsonObject();
+                ParseBean pb = new ParseBean();
+                pb.setName(optString(obj, "name"));
+                pb.setType(optInt(obj, "type"));
+                pb.setUrl(optString(obj, "url"));
+                parseBeanList.add(pb);
+            }
+        }
+        // 还原上次选中的解析器，否则取第一个
+        String lastParse = Hawk.get(HawkConfig.DEFAULT_PARSE, "");
+        mDefaultParse = null;
+        for (ParseBean pb : parseBeanList) {
+            if (pb.getName().equals(lastParse)) {
+                mDefaultParse = pb;
+                break;
+            }
+        }
+        if (mDefaultParse == null && !parseBeanList.isEmpty()) {
+            mDefaultParse = parseBeanList.get(0);
+        }
+        if (mDefaultParse != null) mDefaultParse.setSelected(true);
 
         // 还原上次选中的源，否则取第一个
         String lastKey = Hawk.get(HawkConfig.HOME_API, "");
@@ -111,6 +142,20 @@ public class ApiConfig {
 
     public String getSpider() {
         return spider;
+    }
+
+    public List<ParseBean> getParseBeanList() {
+        return parseBeanList;
+    }
+
+    public ParseBean getDefaultParse() {
+        return mDefaultParse;
+    }
+
+    public void setDefaultParse(ParseBean parse) {
+        for (ParseBean pb : parseBeanList) pb.setSelected(pb == parse);
+        this.mDefaultParse = parse;
+        if (parse != null) Hawk.put(HawkConfig.DEFAULT_PARSE, parse.getName());
     }
 
     private static String optString(JsonObject obj, String key) {
