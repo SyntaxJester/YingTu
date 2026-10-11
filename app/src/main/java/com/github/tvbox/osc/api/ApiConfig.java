@@ -3,7 +3,10 @@ package com.github.tvbox.osc.api;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.github.tvbox.osc.bean.LiveChannel;
+import com.github.tvbox.osc.bean.LiveGroup;
 import com.github.tvbox.osc.bean.ParseBean;
+import com.github.tvbox.osc.bean.SnifferRule;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.google.gson.JsonArray;
@@ -28,6 +31,8 @@ public class ApiConfig {
 
     private final LinkedHashMap<String, SourceBean> sourceBeanList = new LinkedHashMap<>();
     private final List<ParseBean> parseBeanList = new ArrayList<>();
+    private final List<SnifferRule> snifferRules = new ArrayList<>();
+    private final List<String> liveUrls = new ArrayList<>();
     private ParseBean mDefaultParse;
     private SourceBean mHomeSource;
     private String spider = "";
@@ -60,6 +65,8 @@ public class ApiConfig {
     public void parseConfig(String json) {
         sourceBeanList.clear();
         parseBeanList.clear();
+        snifferRules.clear();
+        liveUrls.clear();
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 
         if (root.has("spider")) {
@@ -112,6 +119,44 @@ public class ApiConfig {
         }
         if (mDefaultParse != null) mDefaultParse.setSelected(true);
 
+        // 解析 rules（按域名的嗅探规则）
+        if (root.has("rules")) {
+            try {
+                for (JsonElement e : root.getAsJsonArray("rules")) {
+                    JsonObject obj = e.getAsJsonObject();
+                    SnifferRule rule = new SnifferRule();
+                    rule.name = optString(obj, "name");
+                    rule.hosts = optStringList(obj, "hosts", "host");
+                    rule.regex = optStringList(obj, "regex", null);
+                    rule.script = optStringList(obj, "script", null);
+                    rule.exclude = optStringList(obj, "exclude", null);
+                    if (!rule.hosts.isEmpty()) snifferRules.add(rule);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        // 解析 lives（直播源地址）
+        if (root.has("lives")) {
+            try {
+                for (JsonElement e : root.getAsJsonArray("lives")) {
+                    if (e.isJsonObject()) {
+                        JsonObject obj = e.getAsJsonObject();
+                        // 兼容 url 直接给 / channels 内嵌等，这里取顶层 url
+                        String url = optString(obj, "url");
+                        if (TextUtils.isEmpty(url)) {
+                            // group 内嵌 channels：收集每个 channel 的第一条 url 不现实，优先取可直接解析的 url 字段
+                            url = optString(obj, "api");
+                        }
+                        if (!TextUtils.isEmpty(url)) liveUrls.add(url);
+                    } else if (e.isJsonPrimitive()) {
+                        liveUrls.add(e.getAsString());
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
         // 还原上次选中的源，否则取第一个
         String lastKey = Hawk.get(HawkConfig.HOME_API, "");
         if (!TextUtils.isEmpty(lastKey) && sourceBeanList.containsKey(lastKey)) {
@@ -156,6 +201,29 @@ public class ApiConfig {
         for (ParseBean pb : parseBeanList) pb.setSelected(pb == parse);
         this.mDefaultParse = parse;
         if (parse != null) Hawk.put(HawkConfig.DEFAULT_PARSE, parse.getName());
+    }
+
+    public List<SnifferRule> getSnifferRules() {
+        return snifferRules;
+    }
+
+    public List<String> getLiveUrls() {
+        return liveUrls;
+    }
+
+    private static List<String> optStringList(JsonObject obj, String key, String altKey) {
+        List<String> list = new ArrayList<>();
+        String useKey = obj.has(key) ? key : (altKey != null && obj.has(altKey) ? altKey : null);
+        if (useKey == null) return list;
+        JsonElement el = obj.get(useKey);
+        if (el.isJsonArray()) {
+            for (JsonElement e : el.getAsJsonArray()) {
+                if (!e.isJsonNull()) list.add(e.getAsString());
+            }
+        } else if (el.isJsonPrimitive()) {
+            list.add(el.getAsString());
+        }
+        return list;
     }
 
     private static String optString(JsonObject obj, String key) {

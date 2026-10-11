@@ -18,6 +18,7 @@ import com.github.tvbox.osc.util.Sniffer;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -90,6 +91,22 @@ public class WebParser {
                     deliver(h, reqUrl);
                 }
                 return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String pageUrl) {
+                super.onPageFinished(view, pageUrl);
+                if (pageUrl == null || pageUrl.equals("about:blank")) return;
+                // 注入命中域名规则的辅助脚本（如自动点击播放按钮）
+                List<String> scripts = Sniffer.getScript(pageUrl);
+                for (String js : scripts) {
+                    if (!TextUtils.isEmpty(js)) {
+                        try {
+                            view.evaluateJavascript(js, null);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                }
             }
 
             @Override

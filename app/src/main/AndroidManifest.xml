@@ -67,6 +67,12 @@
             android:theme="@style/AppTheme.Fullscreen" />
 
         <activity
+            android:name=".ui.activity.LivePlayActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/AppTheme.Fullscreen" />
+
+        <activity
             android:name=".ui.activity.SettingActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="unspecified" />
