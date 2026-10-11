@@ -91,7 +91,7 @@ final class KuaishouMediaFallbackInterceptor implements Interceptor {
     private static Response copyResponseForFallback(Response response) {
         return response.newBuilder()
                 .removeHeader("Content-Length")
-                .body(ResponseBody.EMPTY)
+                .body(okhttp3.ResponseBody.create(null, new byte[0]))
                 .build();
     }
 
