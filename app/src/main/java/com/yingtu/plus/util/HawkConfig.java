@@ -16,6 +16,9 @@ public class HawkConfig {
     public static final String FAV_LINKS = "fav_links";
     public static final String FAV_VODS = "fav_vods";
 
+    /** 播放内核：0=ExoPlayer 1=IJK 2=MPV */
+    public static final String PLAYER_CORE = "player_core";
+
     /** WebHome 网页主页条目列表（List&lt;WebHomeEntry&gt;） */
     public static final String WEBHOME_ENTRIES = "webhome_entries";
     /** WebHome 内置示例主页是否已初始化 */

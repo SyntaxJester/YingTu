@@ -1,38 +1,40 @@
 package com.yingtu.plus.ui.activity;
 
-import android.net.Uri;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.OptIn;
-import androidx.media3.common.MediaItem;
-import androidx.media3.common.PlaybackException;
-import androidx.media3.common.Player;
-import androidx.media3.common.util.UnstableApi;
-import androidx.media3.datasource.DefaultHttpDataSource;
-import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
-import androidx.media3.ui.PlayerView;
-
 import com.yingtu.plus.R;
 import com.yingtu.plus.base.BaseActivity;
+import com.yingtu.plus.player.core.AbstractPlayer;
+import com.yingtu.plus.player.core.PlayerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * 直播播放页。与点播不同，直播地址一般是 m3u8 直链，不需要二次解析，
- * 直接用 ExoPlayer 播放；支持频道自定义 UA。
+ * 直播 / 本地视频 / 直链播放页。直链一般无需二次解析，直接用所选内核播放。
+ * 复用可切换内核（ExoPlayer / IJK / MPV）。
  */
-@OptIn(markerClass = UnstableApi.class)
-public class LivePlayActivity extends BaseActivity {
+public class LivePlayActivity extends BaseActivity implements AbstractPlayer.Listener {
 
     public static final String KEY_NAME = "name";
     public static final String KEY_URL = "url";
     public static final String KEY_UA = "ua";
 
-    private PlayerView playerView;
-    private ExoPlayer player;
-    private TextView tvTitle;
+    private SurfaceView surfaceView;
+    private TextView tvTitle, btnCore;
+    private ImageView btnPlayPause;
     private View loading;
+    private SeekBar seekBar;
+    private TextView tvPosition, tvDuration, btnSpeed;
+
+    private AbstractPlayer player;
+    private String url, ua;
 
     @Override
     protected int getLayoutId() {
@@ -41,62 +43,100 @@ public class LivePlayActivity extends BaseActivity {
 
     @Override
     protected void init() {
-        playerView = find(R.id.playerView);
+        surfaceView = find(R.id.surfaceView);
         tvTitle = find(R.id.tvTitle);
+        btnCore = find(R.id.btnCore);
+        btnPlayPause = find(R.id.btnPlayPause);
         loading = find(R.id.loading);
+        seekBar = find(R.id.seekBar);
+        tvPosition = find(R.id.tvPosition);
+        tvDuration = find(R.id.tvDuration);
+        btnSpeed = find(R.id.btnSpeed);
 
         String name = getIntent().getStringExtra(KEY_NAME);
-        String url = getIntent().getStringExtra(KEY_URL);
-        String ua = getIntent().getStringExtra(KEY_UA);
+        url = getIntent().getStringExtra(KEY_URL);
+        ua = getIntent().getStringExtra(KEY_UA);
         tvTitle.setText(name == null ? "" : name);
+        btnCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
+
+        // 直播通常是流，隐藏进度/倍速意义不大但保留播放暂停
+        btnSpeed.setVisibility(View.GONE);
 
         find(R.id.ivBack).setOnClickListener(v -> finish());
+        btnPlayPause.setOnClickListener(v -> {
+            if (player == null) return;
+            if (player.isPlaying()) { player.pause(); btnPlayPause.setImageResource(R.drawable.ic_play); }
+            else { player.start(); btnPlayPause.setImageResource(R.drawable.ic_pause); }
+        });
+        btnCore.setOnClickListener(v -> switchCore());
 
-        play(url, ua);
-    }
-
-    private void play(String url, String ua) {
-        if (url == null || url.isEmpty()) {
-            Toast.makeText(this, "频道地址为空", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        player = new ExoPlayer.Builder(this).build();
-        playerView.setPlayer(player);
-        player.addListener(new Player.Listener() {
-            @Override
-            public void onPlaybackStateChanged(int state) {
-                loading.setVisibility(state == Player.STATE_BUFFERING ? View.VISIBLE : View.GONE);
-            }
-
-            @Override
-            public void onPlayerError(PlaybackException error) {
-                loading.setVisibility(View.GONE);
-                Toast.makeText(LivePlayActivity.this, "播放失败：" + error.getErrorCodeName(),
-                        Toast.LENGTH_LONG).show();
-            }
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override public void surfaceCreated(SurfaceHolder h) { if (player != null) player.setSurface(h.getSurface()); }
+            @Override public void surfaceChanged(SurfaceHolder h, int f, int w, int ht) {}
+            @Override public void surfaceDestroyed(SurfaceHolder h) { if (player != null) player.setSurface(null); }
         });
 
-        DefaultHttpDataSource.Factory httpFactory = new DefaultHttpDataSource.Factory();
-        if (ua != null && !ua.isEmpty()) httpFactory.setUserAgent(ua);
+        play();
+    }
 
-        MediaItem item = MediaItem.fromUri(Uri.parse(url));
-        player.setMediaSource(new DefaultMediaSourceFactory(httpFactory).createMediaSource(item));
+    private void play() {
+        if (url == null || url.isEmpty()) {
+            Toast.makeText(this, "地址为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        loading.setVisibility(View.VISIBLE);
+        player = PlayerFactory.create(this);
+        player.setListener(this);
+        if (surfaceView.getHolder().getSurface() != null) player.setSurface(surfaceView.getHolder().getSurface());
+        Map<String, String> headers = new HashMap<>();
+        if (ua != null && !ua.isEmpty()) headers.put("User-Agent", ua);
+        player.setDataSource(url, headers);
         player.prepare();
-        player.setPlayWhenReady(true);
+    }
+
+    private void switchCore() {
+        int next = (PlayerFactory.currentCore() + 1) % 3;
+        PlayerFactory.setCore(next);
+        btnCore.setText(PlayerFactory.coreName(next));
+        Toast.makeText(this, "已切换内核：" + PlayerFactory.coreName(next), Toast.LENGTH_SHORT).show();
+        if (player != null) { player.release(); player = null; }
+        play();
+    }
+
+    @Override public void onPrepared() {
+        loading.setVisibility(View.GONE);
+        player.start();
+        btnPlayPause.setImageResource(R.drawable.ic_pause);
+    }
+    @Override public void onCompletion() { btnPlayPause.setImageResource(R.drawable.ic_play); }
+    @Override public void onBuffering(boolean b) { loading.setVisibility(b ? View.VISIBLE : View.GONE); }
+    @Override public void onError(String msg) {
+        loading.setVisibility(View.GONE);
+        Toast.makeText(this, "播放失败：" + msg + "（可切换内核重试）", Toast.LENGTH_LONG).show();
+    }
+    @Override public void onVideoSizeChanged(int w, int h) {
+        if (w <= 0 || h <= 0) return;
+        View parent = (View) surfaceView.getParent();
+        int pw = parent.getWidth(), ph = parent.getHeight();
+        if (pw == 0 || ph == 0) return;
+        float ratio = (float) w / h;
+        int nw, nh;
+        if (pw / (float) ph > ratio) { nh = ph; nw = (int) (ph * ratio); }
+        else { nw = pw; nh = (int) (pw / ratio); }
+        android.view.ViewGroup.LayoutParams lp = surfaceView.getLayoutParams();
+        lp.width = nw; lp.height = nh;
+        surfaceView.setLayoutParams(lp);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (player != null) player.pause();
+        if (player != null && player.isPlaying()) { player.pause(); btnPlayPause.setImageResource(R.drawable.ic_play); }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (player != null) {
-            player.release();
-            player = null;
-        }
+        if (player != null) { player.release(); player = null; }
     }
 }

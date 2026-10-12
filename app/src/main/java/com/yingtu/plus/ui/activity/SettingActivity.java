@@ -45,7 +45,7 @@ public class SettingActivity extends BaseActivity {
         bindSystemSection();
         bindBottom();
 
-        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.7.0");
+        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.8.0");
     }
 
     // ===== 数据接口 =====
@@ -104,14 +104,36 @@ public class SettingActivity extends BaseActivity {
         refreshParseName();
         find(R.id.rowParse).setOnClickListener(v -> showParsePicker());
 
-        // 展示性项：点击给出说明（当前播放器固定 ExoPlayer）
+        refreshCoreName();
         find(R.id.rowDetailStyle).setOnClickListener(v -> toast("详情页样式：影音图片"));
         find(R.id.rowProgressTag).setOnClickListener(v -> toast("进度标识：名称"));
-        find(R.id.rowPlayer).setOnClickListener(v -> toast("当前内置 ExoPlayer 播放器"));
-        find(R.id.rowRender).setOnClickListener(v -> toast("渲染方式：TextureView"));
+        find(R.id.rowPlayer).setOnClickListener(v -> showCorePicker());
+        find(R.id.rowRender).setOnClickListener(v -> toast("渲染方式：SurfaceView"));
         find(R.id.rowScale).setOnClickListener(v -> toast("画面缩放：适应"));
         find(R.id.rowSkipAd).setOnClickListener(v -> toast("解析跳过防盗：开启"));
         find(R.id.rowAutoFloat).setOnClickListener(v -> toast("自动悬浮：关闭"));
+    }
+
+    private void refreshCoreName() {
+        TextView tv = find(R.id.tvPlayer);
+        if (tv != null) tv.setText(com.yingtu.plus.player.core.PlayerFactory.coreName(
+                com.yingtu.plus.player.core.PlayerFactory.currentCore()));
+    }
+
+    private void showCorePicker() {
+        final String[] names = {"ExoPlayer（默认·兼容好）", "IJK（ffmpeg 软解）", "MPV（疑难格式）"};
+        int cur = com.yingtu.plus.player.core.PlayerFactory.currentCore();
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("默认播放器内核")
+                .setSingleChoiceItems(names, cur, (d, which) -> {
+                    com.yingtu.plus.player.core.PlayerFactory.setCore(which);
+                    refreshCoreName();
+                    d.dismiss();
+                    toast("已设为 " + com.yingtu.plus.player.core.PlayerFactory.coreName(which)
+                            + "，下次播放生效（播放页右上角也可临时切换）");
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void refreshParseName() {
@@ -195,7 +217,7 @@ public class SettingActivity extends BaseActivity {
             Hawk.delete(HawkConfig.SEARCH_HISTORY);
             toast("缓存已清除");
         });
-        find(R.id.btnUpdate).setOnClickListener(v -> toast("当前已是最新版本 v1.7.0"));
+        find(R.id.btnUpdate).setOnClickListener(v -> toast("当前已是最新版本 v1.8.0"));
         find(R.id.btnAbout).setOnClickListener(v -> showAbout());
     }
 
@@ -203,8 +225,9 @@ public class SettingActivity extends BaseActivity {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("关于 影图+")
                 .setMessage("影图+ 是一个开源 TVBox 风格的影视聚合播放器。\n\n" +
-                        "版本：1.7.0\n" +
-                        "分类筛选 + 站源抽屉切换（对齐原版交互）；CatVod Spider 运行时 + WebHome\n\n" +
+                        "版本：1.8.0\n" +
+                        "分类筛选 + 站源抽屉切换（对齐原版交互）；CatVod Spider 运行时 + WebHome\n" +
+                        "可切换播放内核：ExoPlayer / IJK / MPV\n\n" +
                         "本项目仅供学习与交流，所有视频内容来自用户自行配置的第三方源，" +
                         "开发者不提供、不存储任何影视资源。")
                 .setPositiveButton("知道了", null)

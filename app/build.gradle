@@ -10,9 +10,13 @@ android {
         applicationId "com.yingtu.plus"
         minSdk 24
         targetSdk 28
-        versionCode 8
-        versionName "1.7.0"
+        versionCode 9
+        versionName "1.8.0"
         vectorDrawables.useSupportLibrary = true
+        ndk {
+            // 只保留 ARM ABI：IJK/MPV 的 x86 .so 体积大且真机基本用不到
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
     }
 
     buildTypes {
@@ -62,6 +66,11 @@ dependencies {
     implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
     implementation 'androidx.media3:media3-datasource:1.2.1'
     implementation 'androidx.media3:media3-ui:1.2.1'
+
+    // IJKPlayer 内核（DKPlayer/doikki 预编译，自带 arm64/v7a .so）
+    implementation 'xyz.doikki.android.dkplayer:player-ijk:3.3.7'
+    // MPV 内核（Findroid 预编译 libmpv，自带 arm64/v7a/x86 .so）
+    implementation 'dev.jdtech.mpv:libmpv:0.3.1'
 
     // Networking + JSON
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

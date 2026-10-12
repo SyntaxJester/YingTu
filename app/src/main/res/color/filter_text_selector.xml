@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_selected="true" android:color="#FFFFFF" />
+    <!-- 选中：白字(衬青底)；未选中：次要浅青 -->
+    <item android:state_selected="true" android:color="#06202A" />
     <item android:color="@color/text_secondary" />
 </selector>
