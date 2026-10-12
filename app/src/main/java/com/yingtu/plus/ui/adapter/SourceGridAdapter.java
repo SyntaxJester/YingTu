@@ -51,11 +51,13 @@ public class SourceGridAdapter extends RecyclerView.Adapter<SourceGridAdapter.VH
     public void setSearch(String keyword) {
         this.searchKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
         applyFilter();
+        notifyDataSetChanged();
     }
 
     public void setFilterChip(String chip) {
         this.filterChip = chip == null ? "全部" : chip;
         applyFilter();
+        notifyDataSetChanged();
     }
 
     private void applyFilter() {

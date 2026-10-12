@@ -58,7 +58,7 @@ public class SettingActivity extends BaseActivity {
                 startActivity(new Intent(this, SourceActivity.class)));
         find(R.id.btnApiAdvanced).setOnClickListener(v ->
                 startActivity(new Intent(this, SourceActivity.class)));
-        find(R.id.rowInject).setOnClickListener(v -> toast("注入地址功能开发中"));
+        find(R.id.rowInject).setOnClickListener(v -> showInjectDialog());
         find(R.id.rowApiCache).setOnClickListener(v -> toast("接口缓存功能开发中"));
     }
 
@@ -234,6 +234,39 @@ public class SettingActivity extends BaseActivity {
                         "开发者不提供、不存储任何影视资源。")
                 .setPositiveButton("知道了", null)
                 .show();
+    }
+
+    // ===== 注入地址 =====
+    private void showInjectDialog() {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("输入直播源地址（m3u / txt / url）");
+        input.setText(com.yingtu.plus.util.InjectHelper.getUrl(this));
+        input.setSingleLine(false);
+        input.setMinLines(1);
+        input.setMaxLines(3);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("自定义直播源（注入地址）")
+                .setView(input)
+                .setPositiveButton("保存", (d, w) -> {
+                    com.yingtu.plus.util.InjectHelper.setUrl(this, input.getText().toString().trim());
+                    refreshInjectLabel();
+                    toast("注入地址已保存，放映页将使用此源");
+                })
+                .setNeutralButton("清除", (d, w) -> {
+                    com.yingtu.plus.util.InjectHelper.setUrl(this, "");
+                    refreshInjectLabel();
+                    toast("已清除注入地址，使用订阅内置直播源");
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void refreshInjectLabel() {
+        TextView tv = find(R.id.tvInject);
+        if (tv == null) return;
+        String url = com.yingtu.plus.util.InjectHelper.getUrl(this);
+        tv.setText((url == null || url.isEmpty()) ? getString(R.string.val_off) : shorten(url));
     }
 
     // ===== 壁纸 =====

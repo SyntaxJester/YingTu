@@ -33,6 +33,7 @@ public class ApiConfig {
     private final List<ParseBean> parseBeanList = new ArrayList<>();
     private final List<SnifferRule> snifferRules = new ArrayList<>();
     private final List<String> liveUrls = new ArrayList<>();
+    private Context appContext;
     private ParseBean mDefaultParse;
     private SourceBean mHomeSource;
     private String spider = "";
@@ -49,6 +50,7 @@ public class ApiConfig {
     }
 
     public void init(Context context) {
+        appContext = context.getApplicationContext();
         // 启动时若本地已缓存订阅内容则直接解析
         String cached = Hawk.get(HawkConfig.API_CONFIG_CACHE, "");
         if (!TextUtils.isEmpty(cached)) {
@@ -207,6 +209,13 @@ public class ApiConfig {
     }
 
     public List<String> getLiveUrls() {
+        // 优先使用自定义注入地址
+        String inject = com.yingtu.plus.util.InjectHelper.getUrl(appContext);
+        if (inject != null && !inject.isEmpty()) {
+            java.util.List<String> list = new java.util.ArrayList<>();
+            list.add(inject);
+            return list;
+        }
         return liveUrls;
     }
 
