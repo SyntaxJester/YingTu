@@ -3,11 +3,19 @@ package com.yingtu.plus.ui.activity;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -18,6 +26,7 @@ import com.yingtu.plus.bean.SourceBean;
 import com.yingtu.plus.ui.adapter.HomePagerAdapter;
 import com.yingtu.plus.ui.adapter.SourceGridAdapter;
 import com.yingtu.plus.util.OkGo;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -27,11 +36,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * 首页外壳。顶部 Logo + 标题（当前源名）+ 日期，下方 5 个 Tab：
- *   主页 / 网页首页 / 本地文件 / 直链收藏 / 分享收藏（ViewPager2 承载）。
- *
- * 右侧「站源选择」抽屉：参考原版，点击标题/站源入口从右侧滑出 2 列网格，
- * 点选即切源并刷新首页（无需跳转独立页面，和视频一的交互一致）。
+ * 首页外壳。顶部 Logo + 标题（当前源名）+ 日期，下方 Tab。
+ * 点击标题/Logo 弹出站源选择小窗（带搜索 + 分类筛选）。
  */
 public class HomeActivity extends BaseActivity {
 
@@ -40,8 +46,10 @@ public class HomeActivity extends BaseActivity {
     private TextView tvDate, tvTitle, tvSourceCount;
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
-    private DrawerLayout drawerLayout;
     private SourceGridAdapter sourceAdapter;
+    private PopupWindow sourcePopup;
+    private EditText etSearch;
+    private LinearLayout chipContainer;
 
     private final Handler clock = new Handler(Looper.getMainLooper());
     private final String[] tabTitles = {"主页", "网页首页", "本地文件", "直链收藏", "分享收藏"};
@@ -55,10 +63,8 @@ public class HomeActivity extends BaseActivity {
     protected void init() {
         tvDate = find(R.id.tvDate);
         tvTitle = find(R.id.tvTitle);
-        tvSourceCount = find(R.id.tvSourceCount);
         viewPager = find(R.id.viewPager);
         tabLayout = find(R.id.tabLayout);
-        drawerLayout = find(R.id.drawerLayout);
 
         viewPager.setAdapter(new HomePagerAdapter(this));
         viewPager.setOffscreenPageLimit(tabTitles.length);
@@ -68,31 +74,71 @@ public class HomeActivity extends BaseActivity {
         int tab = getIntent().getIntExtra(KEY_TAB, 0);
         if (tab > 0 && tab < tabTitles.length) viewPager.setCurrentItem(tab, false);
 
-        // 点击标题/Logo 打开站源抽屉
-        tvTitle.setOnClickListener(v -> openSourceDrawer());
-        find(R.id.ivLogo).setOnClickListener(v -> openSourceDrawer());
+        // 点击标题/Logo 打开站源弹窗
+        tvTitle.setOnClickListener(v -> openSourcePopup());
+        find(R.id.ivLogo).setOnClickListener(v -> openSourcePopup());
 
-        setupDrawer();
+        setupSourcePopup();
         refreshTitle();
         startClock();
     }
 
-    private void setupDrawer() {
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.END);
-        find(R.id.btnManageSource).setOnClickListener(v ->
-                startActivity(new Intent(this, SourceActivity.class)));
+    private void setupSourcePopup() {
+        View popupView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_source_picker, null);
 
-        androidx.recyclerview.widget.RecyclerView rv = find(R.id.rvSourceDrawer);
+        sourcePopup = new PopupWindow(popupView, 300, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        sourcePopup.setOutsideTouchable(true);
+        sourcePopup.setBackgroundDrawable(null);
+        sourcePopup.setAnimationStyle(android.R.style.Animation_Dialog);
+
+        etSearch = popupView.findViewById(R.id.etSearch);
+        chipContainer = popupView.findViewById(R.id.chipContainer);
+        tvSourceCount = popupView.findViewById(R.id.tvSourceCount);
+
+        androidx.recyclerview.widget.RecyclerView rv = popupView.findViewById(R.id.rvSource);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
         sourceAdapter = new SourceGridAdapter();
         sourceAdapter.setOnSourceClick(this::onSourcePicked);
         rv.setAdapter(sourceAdapter);
+
+        // 构建 chip
+        buildChips();
+
+        // 搜索
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                sourceAdapter.setSearch(s.toString());
+            }
+        });
+
+        // 管理源按钮
+        popupView.findViewById(R.id.btnManageSource).setOnClickListener(v -> {
+            if (sourcePopup.isShowing()) sourcePopup.dismiss();
+            startActivity(new Intent(this, SourceActivity.class));
+        });
     }
 
-    private void openSourceDrawer() {
+    private void buildChips() {
+        chipContainer.removeAllViews();
+        List<String> chips = sourceAdapter.getChipList();
+        for (int i = 0; i < chips.size(); i++) {
+            Chip c = new Chip(this);
+            c.setText(chips.get(i));
+            c.setCheckable(true);
+            c.setChecked(i == 0);
+            c.setOnClickListener(v -> {
+                sourceAdapter.setFilterChip(chips.get(i));
+            });
+            chipContainer.addView(c);
+        }
+    }
+
+    private void openSourcePopup() {
         List<SourceBean> sources = ApiConfig.get().getSourceBeanList();
         if (sources.isEmpty()) {
-            // 没有源 → 直接去源管理页加载订阅
             startActivity(new Intent(this, SourceActivity.class));
             return;
         }
@@ -100,22 +146,28 @@ public class HomeActivity extends BaseActivity {
         SourceBean home = ApiConfig.get().getHomeSource();
         if (home != null) sourceAdapter.setCurrentKey(home.getKey());
         tvSourceCount.setText(sources.size() + " 个源");
-        drawerLayout.openDrawer(Gravity.END);
+        etSearch.setText("");
+        sourceAdapter.setSearch("");
+        sourceAdapter.setFilterChip("全部");
+        buildChips();
+
+        if (sourcePopup.isShowing()) {
+            sourcePopup.dismiss();
+        } else {
+            sourcePopup.showAsDropDown(tvTitle, 0, 8);
+        }
     }
 
     private void onSourcePicked(SourceBean source) {
         ApiConfig.get().setSourceBean(source);
         sourceAdapter.setCurrentKey(source.getKey());
-        // 预加载 spider jar（csp 站点首次用到）
         final String jar = ApiConfig.get().getSpider();
         if (jar != null && !jar.isEmpty()) {
             OkGo.io(() -> com.yingtu.plus.api.SpiderManager.get().parseJar(jar));
         }
         refreshTitle();
-        drawerLayout.closeDrawer(Gravity.END);
-        // 切到主页 Tab 并强制刷新首页内容
+        if (sourcePopup.isShowing()) sourcePopup.dismiss();
         viewPager.setCurrentItem(0, false);
-        // 通知首页 Fragment 重新加载（它在 onVisible 比对 sourceKey，这里切 tab 会触发）
         notifyHomeReload();
     }
 
@@ -134,7 +186,7 @@ public class HomeActivity extends BaseActivity {
     }
 
     @Override
-    protected void onNewIntent(android.content.Intent intent) {
+    protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (intent == null || viewPager == null) return;
         int tab = intent.getIntExtra(KEY_TAB, -1);
@@ -149,21 +201,18 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(Gravity.END)) {
-            drawerLayout.closeDrawer(Gravity.END);
+        if (sourcePopup != null && sourcePopup.isShowing()) {
+            sourcePopup.dismiss();
         } else {
             super.onBackPressed();
         }
     }
 
     private void startClock() {
-        clock.post(new Runnable() {
+        clock.post(() -> {
             final SimpleDateFormat fmt = new SimpleDateFormat("MM-dd EEE", Locale.CHINA);
-            @Override
-            public void run() {
-                tvDate.setText(fmt.format(new Date()));
-                clock.postDelayed(this, 1000 * 30);
-            }
+            tvDate.setText(fmt.format(new Date()));
+            clock.postDelayed(this, 1000 * 30);
         });
     }
 
@@ -171,5 +220,6 @@ public class HomeActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         clock.removeCallbacksAndMessages(null);
+        if (sourcePopup != null && sourcePopup.isShowing()) sourcePopup.dismiss();
     }
 }

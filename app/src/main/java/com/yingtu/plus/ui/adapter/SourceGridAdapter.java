@@ -12,11 +12,12 @@ import com.yingtu.plus.R;
 import com.yingtu.plus.bean.SourceBean;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * 站源选择抽屉里的 2 列网格适配器（参考原版「站源选择」右侧抽屉）。
- * 当前选中源高亮。
+ * 站源选择弹窗里的 2 列网格适配器。
+ * 支持搜索过滤和分类 chip 筛选。
  */
 public class SourceGridAdapter extends RecyclerView.Adapter<SourceGridAdapter.VH> {
 
@@ -24,18 +25,49 @@ public class SourceGridAdapter extends RecyclerView.Adapter<SourceGridAdapter.VH
         void onClick(SourceBean source);
     }
 
-    private final List<SourceBean> data = new ArrayList<>();
+    private final List<SourceBean> allData = new ArrayList<>();
+    private final List<SourceBean> displayData = new ArrayList<>();
     private String currentKey = "";
+    private String searchKeyword = "";
+    private String filterChip = "全部";
+    private final List<String> chipList = Arrays.asList("全部", "短剧", "综艺", "动漫", "影视", "其他");
     private OnSourceClick listener;
 
     public void setOnSourceClick(OnSourceClick l) {
         this.listener = l;
     }
 
+    public List<String> getChipList() {
+        return chipList;
+    }
+
     public void submit(List<SourceBean> list) {
-        data.clear();
-        if (list != null) data.addAll(list);
+        allData.clear();
+        if (list != null) allData.addAll(list);
+        applyFilter();
         notifyDataSetChanged();
+    }
+
+    public void setSearch(String keyword) {
+        this.searchKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
+        applyFilter();
+    }
+
+    public void setFilterChip(String chip) {
+        this.filterChip = chip == null ? "全部" : chip;
+        applyFilter();
+    }
+
+    private void applyFilter() {
+        displayData.clear();
+        for (SourceBean s : allData) {
+            String name = (s.getName() == null ? "" : s.getName()).toLowerCase();
+            boolean matchSearch = searchKeyword.isEmpty() || name.contains(searchKeyword);
+            boolean matchChip = "全部".equals(filterChip) || name.contains(filterChip.toLowerCase());
+            if (matchSearch && matchChip) {
+                displayData.add(s);
+            }
+        }
     }
 
     public void setCurrentKey(String key) {
@@ -53,7 +85,7 @@ public class SourceGridAdapter extends RecyclerView.Adapter<SourceGridAdapter.VH
 
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
-        SourceBean s = data.get(position);
+        SourceBean s = displayData.get(position);
         h.tvName.setText(s.getName());
         boolean selected = currentKey.equals(s.getKey());
         h.tvName.setSelected(selected);
@@ -65,7 +97,7 @@ public class SourceGridAdapter extends RecyclerView.Adapter<SourceGridAdapter.VH
 
     @Override
     public int getItemCount() {
-        return data.size();
+        return displayData.size();
     }
 
     static class VH extends RecyclerView.ViewHolder {
