@@ -123,14 +123,16 @@ public class HomeActivity extends BaseActivity {
 
     private void buildChips() {
         chipContainer.removeAllViews();
-        List<String> chips = sourceAdapter.getChipList();
+        final List<String> chips = sourceAdapter.getChipList();
         for (int i = 0; i < chips.size(); i++) {
+            final String chipText = chips.get(i);
+            final boolean isDefault = (i == 0);
             Chip c = new Chip(this);
-            c.setText(chips.get(i));
+            c.setText(chipText);
             c.setCheckable(true);
-            c.setChecked(i == 0);
+            c.setChecked(isDefault);
             c.setOnClickListener(v -> {
-                sourceAdapter.setFilterChip(chips.get(i));
+                sourceAdapter.setFilterChip(chipText);
             });
             chipContainer.addView(c);
         }
