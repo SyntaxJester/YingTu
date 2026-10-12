@@ -45,7 +45,7 @@ public class SettingActivity extends BaseActivity {
         bindSystemSection();
         bindBottom();
 
-        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.6.0");
+        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.7.0");
     }
 
     // ===== 数据接口 =====
@@ -195,7 +195,7 @@ public class SettingActivity extends BaseActivity {
             Hawk.delete(HawkConfig.SEARCH_HISTORY);
             toast("缓存已清除");
         });
-        find(R.id.btnUpdate).setOnClickListener(v -> toast("当前已是最新版本 v1.6.0"));
+        find(R.id.btnUpdate).setOnClickListener(v -> toast("当前已是最新版本 v1.7.0"));
         find(R.id.btnAbout).setOnClickListener(v -> showAbout());
     }
 
@@ -203,8 +203,8 @@ public class SettingActivity extends BaseActivity {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("关于 影图+")
                 .setMessage("影图+ 是一个开源 TVBox 风格的影视聚合播放器。\n\n" +
-                        "版本：1.6.0\n" +
-                        "新增：CatVod Spider 运行时（支持 csp_ JAR/JS 源）+ WebHome 网页自定义首页\n\n" +
+                        "版本：1.7.0\n" +
+                        "分类筛选 + 站源抽屉切换（对齐原版交互）；CatVod Spider 运行时 + WebHome\n\n" +
                         "本项目仅供学习与交流，所有视频内容来自用户自行配置的第三方源，" +
                         "开发者不提供、不存储任何影视资源。")
                 .setPositiveButton("知道了", null)

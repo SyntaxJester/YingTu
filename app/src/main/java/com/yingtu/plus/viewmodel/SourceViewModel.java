@@ -73,15 +73,16 @@ public class SourceViewModel extends ViewModel {
                 sortResult.postValue(JsonParserHelper.parseSortList(body)));
     }
 
-    /** 加载某个分类的影片列表 */
-    public void getList(String typeId, int page) {
+    /** 加载某个分类的影片列表（可带筛选 extend） */
+    public void getList(String typeId, int page, HashMap<String, String> extend) {
         SourceBean source = ApiConfig.get().getHomeSource();
         if (source == null) { listResult.postValue(null); return; }
+        final HashMap<String, String> ext = extend == null ? new HashMap<>() : extend;
         if (VodSpider.isCsp(source)) {
             VodSpider.executor().execute(() -> {
                 try {
                     Spider spider = VodSpider.get(source);
-                    String json = spider.categoryContent(typeId, String.valueOf(page), true, new HashMap<>());
+                    String json = spider.categoryContent(typeId, String.valueOf(page), true, ext);
                     listResult.postValue(JsonParserHelper.parseMovieList(json, source.getKey()));
                 } catch (Throwable e) {
                     e.printStackTrace();
@@ -90,9 +91,19 @@ public class SourceViewModel extends ViewModel {
             });
             return;
         }
-        String url = source.getApi() + "?ac=detail&t=" + typeId + "&pg=" + page;
-        get(url, body ->
+        StringBuilder url = new StringBuilder(source.getApi()).append("?ac=detail&t=").append(typeId).append("&pg=").append(page);
+        for (java.util.Map.Entry<String, String> en : ext.entrySet()) {
+            if (en.getValue() != null && !en.getValue().isEmpty()) {
+                url.append('&').append(en.getKey()).append('=').append(en.getValue());
+            }
+        }
+        get(url.toString(), body ->
                 listResult.postValue(JsonParserHelper.parseMovieList(body, source.getKey())));
+    }
+
+    /** 兼容旧调用 */
+    public void getList(String typeId, int page) {
+        getList(typeId, page, null);
     }
 
     /** 加载影片详情 */

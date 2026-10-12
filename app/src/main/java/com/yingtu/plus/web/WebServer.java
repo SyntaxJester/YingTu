@@ -62,6 +62,8 @@ public class WebServer {
             serverSocket = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
             port = serverSocket.getLocalPort();
             running = true;
+            // 把端口注册给 CatVod Proxy，spider 用它拼本地 /proxy 地址（图片代理 proxyImg / 网盘播放等依赖）
+            try { com.github.catvod.Proxy.set(port); } catch (Throwable ignored) {}
             Thread accept = new Thread(this::loop, "yingtu-webserver");
             accept.setDaemon(true);
             accept.start();
@@ -149,6 +151,8 @@ public class WebServer {
 
             if ("/webResource".equals(path)) {
                 proxy(out, method, query, reqHeaders, body);
+            } else if ("/proxy".equals(path)) {
+                spiderProxy(out, query, reqHeaders);
             } else {
                 writeStatus(out, 404, "Not Found");
                 writeCors(out);
@@ -258,6 +262,57 @@ public class WebServer {
             }
         } finally {
             if (response != null) response.close();
+        }
+    }
+
+    /**
+     * /proxy 端点：转发给 CatVod Spider 的 Proxy.proxy(params)。
+     *
+     * Spider（尤其图片代理 proxyImg、本地文件、网盘播放）会生成形如
+     * http://127.0.0.1:port/proxy?... 的地址交给播放器/ImageView。
+     * 返回约定 Object[]{ Integer code, String mime, InputStream body[, Map headers] }。
+     */
+    private void spiderProxy(OutputStream out, String query, Map<String, String> reqHeaders) throws IOException {
+        Map<String, String> params = parseQuery(query);
+        // 透传部分请求头（Range 等）给 spider
+        String range = headerValue(reqHeaders, "Range");
+        if (!TextUtils.isEmpty(range)) params.put("Range", range);
+        Object[] rs = null;
+        try {
+            rs = com.yingtu.plus.api.SpiderManager.get().proxy(params);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        if (rs == null || rs.length < 3 || !(rs[0] instanceof Integer) || !(rs[2] instanceof InputStream)) {
+            writeStatus(out, 500, "Proxy Error");
+            writeCors(out);
+            out.write("Content-Length: 0\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+            out.flush();
+            return;
+        }
+        int code = (Integer) rs[0];
+        String mime = rs[1] == null ? "application/octet-stream" : rs[1].toString();
+        InputStream body = (InputStream) rs[2];
+        writeStatus(out, code, "OK");
+        out.write(("Content-Type: " + mime + "\r\n").getBytes(StandardCharsets.UTF_8));
+        // 可选的第 4 位 headers
+        if (rs.length > 3 && rs[3] instanceof Map<?, ?> hs) {
+            for (Map.Entry<?, ?> e : hs.entrySet()) {
+                if (e.getKey() == null || e.getValue() == null) continue;
+                String k = e.getKey().toString();
+                if (isHopByHop(k)) continue;
+                out.write((k + ": " + e.getValue() + "\r\n").getBytes(StandardCharsets.UTF_8));
+            }
+        }
+        writeCors(out);
+        out.write("Connection: close\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+        try {
+            byte[] buf = new byte[16384];
+            int n;
+            while ((n = body.read(buf)) != -1) out.write(buf, 0, n);
+            out.flush();
+        } finally {
+            try { body.close(); } catch (Throwable ignored) {}
         }
     }
 

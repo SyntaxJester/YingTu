@@ -2,6 +2,7 @@ package com.yingtu.plus.util;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -13,7 +14,12 @@ import okhttp3.OkHttpClient;
  */
 public class OkGo {
 
-    private static final OkHttpClient CLIENT = new OkHttpClient.Builder().build();
+    private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build();
     private static final Executor IO = Executors.newCachedThreadPool();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 

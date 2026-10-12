@@ -27,22 +27,57 @@ import java.util.List;
  */
 public class JsonParserHelper {
 
-    /** 解析首页分类标签 */
+    /** 解析首页分类标签（含 filters 筛选条件） */
     public static List<MovieSort> parseSortList(String json) {
         List<MovieSort> list = new ArrayList<>();
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-            if (root.has("class")) {
-                for (JsonElement e : root.getAsJsonArray("class")) {
-                    JsonObject o = e.getAsJsonObject();
-                    list.add(new MovieSort(
-                            getString(o, "type_id"),
-                            getString(o, "type_name")));
-                }
+            if (!root.has("class")) return list;
+
+            // filters 可能是对象 { typeId: [ {key,name,value:[{n,v}]} ] }
+            JsonObject filtersObj = null;
+            if (root.has("filters") && root.get("filters").isJsonObject()) {
+                filtersObj = root.getAsJsonObject("filters");
+            }
+
+            for (JsonElement e : root.getAsJsonArray("class")) {
+                JsonObject o = e.getAsJsonObject();
+                String tid = getString(o, "type_id");
+                MovieSort sort = new MovieSort(tid, getString(o, "type_name"));
+
+                // 优先 class 条目内嵌的 filters，其次顶层 filters[typeId]
+                JsonElement fEl = null;
+                if (o.has("filters")) fEl = o.get("filters");
+                else if (filtersObj != null && filtersObj.has(tid)) fEl = filtersObj.get(tid);
+                if (fEl != null && fEl.isJsonArray()) parseFilters(fEl.getAsJsonArray(), sort);
+
+                list.add(sort);
             }
         } catch (Throwable ignored) {
         }
         return list;
+    }
+
+    private static void parseFilters(JsonArray arr, MovieSort sort) {
+        for (JsonElement fe : arr) {
+            if (!fe.isJsonObject()) continue;
+            JsonObject fo = fe.getAsJsonObject();
+            String key = getString(fo, "key");
+            String name = getString(fo, "name");
+            if (key.isEmpty()) continue;
+            MovieSort.Filter filter = new MovieSort.Filter(key, name.isEmpty() ? key : name);
+            if (fo.has("value") && fo.get("value").isJsonArray()) {
+                for (JsonElement ve : fo.getAsJsonArray("value")) {
+                    if (!ve.isJsonObject()) continue;
+                    JsonObject vo = ve.getAsJsonObject();
+                    String n = getString(vo, "n");
+                    String v = getString(vo, "v");
+                    if (n.isEmpty() && v.isEmpty()) continue;
+                    filter.values.add(new MovieSort.Value(n.isEmpty() ? v : n, v));
+                }
+            }
+            if (!filter.values.isEmpty()) sort.filters.add(filter);
+        }
     }
 
     /** 解析影片列表（分类页 / 搜索页通用） */
