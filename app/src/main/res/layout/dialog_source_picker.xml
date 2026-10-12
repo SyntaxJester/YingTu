@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="300dp"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="end|top"
     android:background="@drawable/bg_source_picker"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="14dp">
 
     <!-- 标题行 -->
     <LinearLayout
@@ -46,17 +45,17 @@
     <EditText
         android:id="@+id/etSearch"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:background="@drawable/bg_input"
-        android:hint="搜索站源..."
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/bg_search_input"
+        android:hint="搜索站源…"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
         android:singleLine="true"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_hint"
-        android:textSize="13sp" />
+        android:textSize="14sp" />
 
     <!-- 分类筛选 chip -->
     <HorizontalScrollView
@@ -71,14 +70,14 @@
             android:orientation="horizontal" />
     </HorizontalScrollView>
 
-    <!-- 源网格 -->
+    <!-- 源网格（最大高度 400dp） -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSource"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:maxHeight="400dp"
+        android:layout_marginTop="10dp"
         android:clipToPadding="false"
+        android:maxHeight="400dp"
         android:paddingBottom="4dp"
         android:scrollbars="none" />
 

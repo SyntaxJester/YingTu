@@ -219,6 +219,14 @@
                 <TextView android:id="@+id/tvCacheHint" style="@style/SettingValue" android:text="@string/val_on" />
                 <ImageView style="@style/SettingArrow" />
             </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowWallpaper" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="壁纸" />
+                <TextView android:id="@+id/tvWallpaper" style="@style/SettingValue" android:text="默认" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- ========== 底部按钮 ========== -->

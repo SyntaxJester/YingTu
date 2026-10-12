@@ -45,7 +45,7 @@ public class SettingActivity extends BaseActivity {
         bindSystemSection();
         bindBottom();
 
-        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.8.0");
+        ((TextView) find(R.id.tvVersion)).setText("影图+ v1.9.0");
     }
 
     // ===== 数据接口 =====
@@ -188,6 +188,8 @@ public class SettingActivity extends BaseActivity {
             ((TextView) find(R.id.tvCacheHint)).setText(R.string.val_on);
             toast("已清理播放缓存");
         });
+
+        bindWallpaperSection();
     }
 
     private void refreshGridColumns() {
@@ -234,11 +236,26 @@ public class SettingActivity extends BaseActivity {
                 .show();
     }
 
+    // ===== 壁纸 =====
+    private void bindWallpaperSection() {
+        TextView tvWallpaper = find(R.id.tvWallpaper);
+        refreshWallpaperLabel(tvWallpaper);
+        find(R.id.rowWallpaper).setOnClickListener(v ->
+                startActivity(new Intent(this, WallpaperActivity.class)));
+    }
+
+    private void refreshWallpaperLabel(TextView tv) {
+        tv.setText(com.yingtu.plus.util.WallpaperHelper.hasCustomWallpaper(this)
+                ? "自定义" : "默认");
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         refreshApiUrl();
         refreshParseName();
+        TextView tv = find(R.id.tvWallpaper);
+        if (tv != null) refreshWallpaperLabel(tv);
     }
 
     // ===== 工具 =====

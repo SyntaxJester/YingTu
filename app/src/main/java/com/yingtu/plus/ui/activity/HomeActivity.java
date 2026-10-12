@@ -61,6 +61,8 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     protected void init() {
+        // 应用自定义壁纸
+        applyCustomWallpaper();
         tvDate = find(R.id.tvDate);
         tvTitle = find(R.id.tvTitle);
         viewPager = find(R.id.viewPager);
@@ -87,7 +89,9 @@ public class HomeActivity extends BaseActivity {
         View popupView = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_source_picker, null);
 
-        sourcePopup = new PopupWindow(popupView, 300, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        sourcePopup = new PopupWindow(popupView,
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.92),
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
         sourcePopup.setOutsideTouchable(true);
         sourcePopup.setBackgroundDrawable(null);
         sourcePopup.setAnimationStyle(android.R.style.Animation_Dialog);
@@ -156,7 +160,9 @@ public class HomeActivity extends BaseActivity {
         if (sourcePopup.isShowing()) {
             sourcePopup.dismiss();
         } else {
-            sourcePopup.showAsDropDown(tvTitle, 0, 8);
+            sourcePopup.showAtLocation(find(android.R.id.content),
+                    Gravity.TOP | Gravity.CENTER_HORIZONTAL,
+                    0, 100);
         }
     }
 
@@ -207,6 +213,14 @@ public class HomeActivity extends BaseActivity {
             sourcePopup.dismiss();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private void applyCustomWallpaper() {
+        android.net.Uri uri = com.yingtu.plus.util.WallpaperHelper.getWallpaperUri(this);
+        if (uri != null) {
+            getWindow().setBackgroundDrawable(
+                    android.graphics.drawable.BitmapDrawable.createFromUri(this, uri));
         }
     }
 

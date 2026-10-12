@@ -1,23 +1,18 @@
 package com.yingtu.plus.ui.activity;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.yingtu.plus.R;
 import com.yingtu.plus.base.BaseActivity;
-import com.yingtu.plus.api.ApiConfig;
-import com.yingtu.plus.util.HawkConfig;
-import com.orhanobut.hawk.Hawk;
 
 /**
- * 启动页：品牌展示 1.2 秒后跳转到首页。
+ * 启动页：仅显示 Logo 图标 + 应用名，1.2 秒后跳转到首页。
  */
 public class FirstActivity extends BaseActivity {
 
@@ -28,12 +23,17 @@ public class FirstActivity extends BaseActivity {
 
     @Override
     protected void init() {
+        // 应用自定义壁纸
+        android.net.Uri wp = com.yingtu.plus.util.WallpaperHelper.getWallpaperUri(this);
+        if (wp != null) {
+            getWindow().setBackgroundDrawable(
+                    android.graphics.drawable.BitmapDrawable.createFromUri(this, wp));
+        }
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
         ImageView ivLogo = find(R.id.ivLogo);
-        TextView tvVersion = find(R.id.tvVersion);
 
         // Logo 入场动画
         ScaleAnimation anim = new ScaleAnimation(
@@ -43,8 +43,6 @@ public class FirstActivity extends BaseActivity {
         anim.setDuration(600);
         anim.setFillAfter(true);
         ivLogo.startAnimation(anim);
-
-        tvVersion.setText("v1.8.0");
 
         // 1.2 秒后跳转
         new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
