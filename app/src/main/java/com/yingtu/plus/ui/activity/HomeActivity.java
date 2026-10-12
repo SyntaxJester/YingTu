@@ -219,8 +219,15 @@ public class HomeActivity extends BaseActivity {
     private void applyCustomWallpaper() {
         android.net.Uri uri = com.yingtu.plus.util.WallpaperHelper.getWallpaperUri(this);
         if (uri != null) {
-            getWindow().setBackgroundDrawable(
-                    android.graphics.drawable.BitmapDrawable.createFromUri(this, uri));
+            try {
+                android.graphics.Bitmap bmp =
+                        android.graphics.BitmapFactory.decodeStream(
+                                getContentResolver().openInputStream(uri));
+                if (bmp != null) {
+                    getWindow().setBackgroundDrawable(
+                            new android.graphics.drawable.BitmapDrawable(bmp));
+                }
+            } catch (Exception ignored) {}
         }
     }
 

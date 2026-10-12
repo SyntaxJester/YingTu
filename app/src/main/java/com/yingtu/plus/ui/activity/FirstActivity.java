@@ -26,8 +26,15 @@ public class FirstActivity extends BaseActivity {
         // 应用自定义壁纸
         android.net.Uri wp = com.yingtu.plus.util.WallpaperHelper.getWallpaperUri(this);
         if (wp != null) {
-            getWindow().setBackgroundDrawable(
-                    android.graphics.drawable.BitmapDrawable.createFromUri(this, wp));
+            try {
+                android.graphics.Bitmap bmp =
+                        android.graphics.BitmapFactory.decodeStream(
+                                getContentResolver().openInputStream(wp));
+                if (bmp != null) {
+                    getWindow().setBackgroundDrawable(
+                            new android.graphics.drawable.BitmapDrawable(bmp));
+                }
+            } catch (Exception ignored) {}
         }
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
