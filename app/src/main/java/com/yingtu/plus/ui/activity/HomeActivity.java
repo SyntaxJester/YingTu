@@ -209,11 +209,15 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void startClock() {
-        clock.post(() -> {
+        Runnable tick = new Runnable() {
             final SimpleDateFormat fmt = new SimpleDateFormat("MM-dd EEE", Locale.CHINA);
-            tvDate.setText(fmt.format(new Date()));
-            clock.postDelayed(this, 1000 * 30);
-        });
+            @Override
+            public void run() {
+                tvDate.setText(fmt.format(new Date()));
+                clock.postDelayed(this, 1000 * 30);
+            }
+        };
+        clock.post(tick);
     }
 
     @Override
