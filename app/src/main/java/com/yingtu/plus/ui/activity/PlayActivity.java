@@ -53,8 +53,8 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     public static final String KEY_POSITION = "position";
 
     private FrameLayout videoContainer, centerControls, topControl, bottomControl, osdContainer;
-    private ImageView btnPlayPause, btnPrev, btnNext, btnBack, btnDanmaku, btnSpeed, btnCore, btnEpisode, btnCast, btnFav, btnSetting, btnFullscreen;
-    private TextView tvTitle, tvPosition, tvDuration, tvOsd;
+    private ImageView btnPlayPause, btnPrev, btnNext, btnBack, btnDanmaku, btnFullscreen, btnEpisode;
+    private TextView tvTitle, tvPosition, tvDuration, tvOsd, btnSpeed, btnCore;
     private SeekBar seekBar;
     private View loading;
 
@@ -96,7 +96,7 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
         // 顶部控制栏
         topControl = find(R.id.topControl);
-        btnBack = find(R.id.btnBack);
+        btnBack = find(R.id.ivBack);
         tvTitle = find(R.id.tvTitle);
         btnDanmaku = find(R.id.btnDanmaku);
         btnFullscreen = find(R.id.btnFullscreen);
@@ -104,7 +104,7 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         // 中间控件
         centerControls = find(R.id.centerControls);
         btnPrev = find(R.id.btnPrev);
-        btnPlayPause = find(R.id.btnPlayPause);
+        btnPlayPause = find(R.id.centerPlay);
         btnNext = find(R.id.btnNext);
 
         // OSD 提示
@@ -113,12 +113,9 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
         // 底部控制栏
         bottomControl = find(R.id.bottomControl);
-        btnEpisode = find(R.id.btnEpisode);
         btnCore = find(R.id.btnCore);
         btnSpeed = find(R.id.btnSpeed);
-        btnCast = find(R.id.btnCast);
-        btnFav = find(R.id.btnFav);
-        btnSetting = find(R.id.btnSetting);
+        btnEpisode = find(R.id.btnEpisode);
         tvPosition = find(R.id.tvPosition);
         tvDuration = find(R.id.tvDuration);
         seekBar = find(R.id.seekBar);
@@ -143,9 +140,6 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         btnSpeed.setOnClickListener(v -> cycleSpeed());
         btnCore.setOnClickListener(v -> switchCore());
         btnEpisode.setOnClickListener(v -> showOsd("选集功能开发中"));
-        btnCast.setOnClickListener(v -> showOsd("投屏功能开发中"));
-        btnFav.setOnClickListener(v -> showOsd("收藏功能开发中"));
-        btnSetting.setOnClickListener(v -> showOsd("设置功能开发中"));
 
         // 点击屏幕显示/隐藏控制层
         videoContainer.setOnClickListener(v -> toggleControls());
