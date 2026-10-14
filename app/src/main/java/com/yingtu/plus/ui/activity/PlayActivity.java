@@ -61,9 +61,11 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
     private SurfaceView surfaceView;
     private TextView tvTitle, tvPosition, tvDuration, btnSpeed, btnCore;
-    private ImageView btnPlayPause, ivCenterPlay, btnPrev, btnNext;
+    private ImageView btnPlayPause, ivCenterPlay, btnPrev, btnNext, btnDanmaku, btnFullscreen;
     private SeekBar seekBar;
-    private View loading, centerControls;
+    private View loading, centerControls, topControlBar, controlBar;
+    private Handler hideHandler = new Handler(Looper.getMainLooper());
+    private Runnable hideControlsRunnable;
 
     private AbstractPlayer player;
     private ParseJob parseJob;
@@ -73,6 +75,7 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     private boolean dragging = false;
     private boolean prepared = false;
     private boolean isPortraitVideo = false;
+    private boolean controlsVisible = true;
 
     // 当前解析出的播放参数（用于内核热切换时重放）
     private String playUrl;
@@ -104,31 +107,49 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         seekBar = find(R.id.seekBar);
         loading = find(R.id.loading);
         
-        // PeekPro 风格中间控件
+        // 新控制栏
+        topControlBar = find(R.id.topControlBar);
+        controlBar = find(R.id.controlBar);
         centerControls = find(R.id.centerControls);
         ivCenterPlay = find(R.id.ivCenterPlay);
         btnPrev = find(R.id.btnPrev);
         btnNext = find(R.id.btnNext);
+        btnDanmaku = find(R.id.btnDanmaku);
+        btnFullscreen = find(R.id.btnFullscreen);
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
         resumePosition = getIntent().getLongExtra(KEY_POSITION, 0);
 
+        // 点击事件
         find(R.id.ivBack).setOnClickListener(v -> finish());
+        find(R.id.ivBackOld).setOnClickListener(v -> finish());
         btnPlayPause.setOnClickListener(v -> togglePlay());
         if (ivCenterPlay != null) ivCenterPlay.setOnClickListener(v -> togglePlay());
         if (btnPrev != null) btnPrev.setOnClickListener(v -> playPreviousEpisode());
         if (btnNext != null) btnNext.setOnClickListener(v -> playNextEpisode());
+        if (btnDanmaku != null) btnDanmaku.setOnClickListener(v -> toggleDanmaku());
+        if (btnFullscreen != null) btnFullscreen.setOnClickListener(v -> toggleFullscreen());
         btnSpeed.setOnClickListener(v -> cycleSpeed());
         btnCore.setOnClickListener(v -> switchCore());
         btnCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
 
+        // 点击屏幕任意位置显示/隐藏控制层
+        findViewById(R.id.surfaceContainer).setOnClickListener(v -> toggleControls());
+        findViewById(R.id.surfaceContainer).setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                showControls();
+            }
+            return false;
+        });
+
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {}
-            @Override public void onStartTrackingTouch(SeekBar s) { dragging = true; }
+            @Override public void onStartTrackingTouch(SeekBar s) { dragging = true; hideControls(); }
             @Override public void onStopTrackingTouch(SeekBar s) {
                 dragging = false;
                 if (player != null) player.seekTo(s.getProgress());
+                showControls();
             }
         });
 
@@ -145,6 +166,9 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         buildHistory();
         createPlayer();
         resolveAndPlay(getIntent().getStringExtra(KEY_URL));
+        
+        // 初始显示控制层
+        showControls();
     }
 
     private void buildHistory() {
@@ -376,8 +400,54 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
     /** 播放下一集 */
     private void playNextEpisode() {
-        // TODO: 需要从 Intent 获取当前剧集索引，然后播放下一集
         Toast.makeText(this, "下一集功能预留", Toast.LENGTH_SHORT).show();
+    }
+
+    /** 切换控制层显示/隐藏 */
+    private void toggleControls() {
+        if (controlsVisible) {
+            hideControls();
+        } else {
+            showControls();
+        }
+    }
+
+    /** 显示控制层 */
+    private void showControls() {
+        controlsVisible = true;
+        if (topControlBar != null) topControlBar.setVisibility(View.VISIBLE);
+        if (controlBar != null) controlBar.setVisibility(View.VISIBLE);
+        if (centerControls != null) centerControls.setVisibility(View.VISIBLE);
+        
+        // 3 秒后自动隐藏
+        hideHandler.removeCallbacks(hideControlsRunnable);
+        hideControlsRunnable = this::hideControls;
+        hideHandler.postDelayed(hideControlsRunnable, 3000);
+    }
+
+    /** 隐藏控制层 */
+    private void hideControls() {
+        controlsVisible = false;
+        hideHandler.removeCallbacks(hideControlsRunnable);
+        if (topControlBar != null) topControlBar.setVisibility(View.GONE);
+        if (controlBar != null) controlBar.setVisibility(View.GONE);
+        if (centerControls != null) centerControls.setVisibility(View.GONE);
+    }
+
+    /** 切换全屏模式 */
+    private void toggleFullscreen() {
+        if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            // 当前是横屏，切换到竖屏
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        } else {
+            // 当前是竖屏，切换到横屏
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
+    }
+
+    /** 切换弹幕开关（预留） */
+    private void toggleDanmaku() {
+        Toast.makeText(this, "弹幕功能预留", Toast.LENGTH_SHORT).show();
     }
 
     private void resizeSurface(int vw, int vh) {
@@ -416,6 +486,7 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     @Override
     protected void onPause() {
         super.onPause();
+        hideHandler.removeCallbacks(hideControlsRunnable);
         if (player != null && player.isPlaying()) {
             player.pause();
             btnPlayPause.setImageResource(R.drawable.ic_play);
@@ -424,8 +495,17 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (controlsVisible) {
+            showControls();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        hideHandler.removeCallbacks(hideControlsRunnable);
         saveProgress();
         if (parseJob != null) { parseJob.stop(); parseJob = null; }
         releasePlayer();
