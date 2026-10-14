@@ -1,6 +1,8 @@
 package com.yingtu.plus.ui.activity;
 
 import android.content.pm.ActivityInfo;
+import android.media.AudioManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -8,7 +10,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -96,7 +101,11 @@ private boolean controlsVisible = true;
     private TextView osdContent;
     private ImageView osdIcon;
     private View osdHintLayout;
+    private LinearLayout osdTopLeft, osdTopRight, osdBottomLeft, osdBottomRight;
     private Handler osdHideHandler;
+    private AudioManager audioManager;
+    private float gestureStartY = 0;
+    private boolean isBrightnessGesture = false;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable ticker = new Runnable() {
@@ -134,6 +143,12 @@ private boolean controlsVisible = true;
         btnDanmaku = find(R.id.btnDanmaku);
         btnFullscreen = find(R.id.btnFullscreen);
 
+        // OSD 四角显示区域
+        osdTopLeft = find(R.id.osdTopLeft);
+        osdTopRight = find(R.id.osdTopRight);
+        osdBottomLeft = find(R.id.osdBottomLeft);
+        osdBottomRight = find(R.id.osdBottomRight);
+
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
         vodName = title;
@@ -162,9 +177,42 @@ private boolean controlsVisible = true;
 
         // 点击屏幕任意位置显示/隐藏控制层
         findViewById(R.id.surfaceContainer).setOnClickListener(v -> toggleControls());
+        
+        // 手势：左半屏上下滑调亮度，右半屏上下滑调音量
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int screenHeight = wm.getDefaultDisplay().getHeight();
         findViewById(R.id.surfaceContainer).setOnTouchListener((v, event) -> {
-            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+            int action = event.getActionMasked();
+            if (action == android.view.MotionEvent.ACTION_DOWN) {
                 showControls();
+                gestureStartY = event.getRawY();
+                float x = event.getRawX();
+                isBrightnessGesture = x < screenHeight * 0.5f ? false : true; // 左屏音量，右屏亮度
+                return true;
+            }
+            if (action == android.view.MotionEvent.ACTION_MOVE && !dragging) {
+                float deltaY = gestureStartY - event.getRawY();
+                if (Math.abs(deltaY) < 5) return true;
+                if (isBrightnessGesture) {
+                    float cur = getWindow().getAttributes().screenBrightness;
+                    if (cur < 0) cur = 0.5f;
+                    float newB = Math.max(0.01f, Math.min(1.0f, cur + deltaY / screenHeight));
+                    setBrightness(newB);
+                    String hint = "亮度 " + (int) (newB * 100) + "%";
+                    showOsdBottomRight(hint);
+                    gestureStartY = event.getRawY();
+                } else {
+                    int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    int deltaVol = (int) (deltaY / screenHeight * maxVolume);
+                    int newVol = Math.max(0, Math.min(maxVolume, curVol + deltaVol));
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0);
+                    String hint = "音量 " + newVol + "/" + maxVolume;
+                    showOsdBottomRight(hint);
+                    gestureStartY = event.getRawY();
+                }
+                return true;
             }
             return false;
         });
@@ -517,6 +565,23 @@ private boolean controlsVisible = true;
         osdHideHandler.postDelayed(() -> {
             if (osdHintLayout != null) osdHintLayout.setVisibility(View.GONE);
         }, 1200);
+    }
+
+    private void setBrightness(float b) {
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.screenBrightness = b;
+        getWindow().setAttributes(lp);
+    }
+
+    private void showOsdBottomRight(String text) {
+        if (osdBottomRight != null) {
+            TextView tv = osdBottomRight.findViewById(R.id.tvOsdBottomRight);
+            if (tv != null) tv.setText(text);
+            osdBottomRight.setVisibility(View.VISIBLE);
+            if (osdHideHandler == null) osdHideHandler = new Handler(Looper.getMainLooper());
+            osdHideHandler.removeCallbacksAndMessages(null);
+            osdHideHandler.postDelayed(() -> osdBottomRight.setVisibility(View.GONE), 1200);
+        }
     }
 
     private int dp2px(float dp) {
