@@ -1,5 +1,6 @@
 package com.yingtu.plus.ui.activity;
 
+import android.content.pm.ActivityInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.SurfaceHolder;
@@ -60,9 +61,9 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
     private SurfaceView surfaceView;
     private TextView tvTitle, tvPosition, tvDuration, btnSpeed, btnCore;
-    private ImageView btnPlayPause;
+    private ImageView btnPlayPause, ivCenterPlay, btnPrev, btnNext;
     private SeekBar seekBar;
-    private View loading;
+    private View loading, centerControls;
 
     private AbstractPlayer player;
     private ParseJob parseJob;
@@ -71,6 +72,7 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     private int speedIndex = 0;
     private boolean dragging = false;
     private boolean prepared = false;
+    private boolean isPortraitVideo = false;
 
     // 当前解析出的播放参数（用于内核热切换时重放）
     private String playUrl;
@@ -101,6 +103,12 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         btnPlayPause = find(R.id.btnPlayPause);
         seekBar = find(R.id.seekBar);
         loading = find(R.id.loading);
+        
+        // PeekPro 风格中间控件
+        centerControls = find(R.id.centerControls);
+        ivCenterPlay = find(R.id.ivCenterPlay);
+        btnPrev = find(R.id.btnPrev);
+        btnNext = find(R.id.btnNext);
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
@@ -108,6 +116,9 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
         find(R.id.ivBack).setOnClickListener(v -> finish());
         btnPlayPause.setOnClickListener(v -> togglePlay());
+        if (ivCenterPlay != null) ivCenterPlay.setOnClickListener(v -> togglePlay());
+        if (btnPrev != null) btnPrev.setOnClickListener(v -> playPreviousEpisode());
+        if (btnNext != null) btnNext.setOnClickListener(v -> playNextEpisode());
         btnSpeed.setOnClickListener(v -> cycleSpeed());
         btnCore.setOnClickListener(v -> switchCore());
         btnCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
@@ -328,6 +339,45 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
     @Override public void onVideoSizeChanged(int width, int height) {
         resizeSurface(width, height);
+        adjustOrientation(width, height);
+    }
+
+    /** 根据视频宽高比自动调整屏幕方向：竖屏短剧用竖屏，横屏影视用横屏 */
+    private void adjustOrientation(int width, int height) {
+        if (width <= 0 || height <= 0) return;
+        float aspectRatio = (float) width / height;
+        boolean wasPortrait = isPortraitVideo;
+        
+        // 宽高比 < 0.8 认为是竖屏视频（如 9:16 ≈ 0.56，720x1280 ≈ 0.56）
+        isPortraitVideo = aspectRatio < 0.8f;
+        
+        if (wasPortrait == isPortraitVideo) return; // 方向没变，跳过
+        
+        int newOrientation;
+        if (isPortraitVideo) {
+            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+        } else {
+            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+        }
+        
+        try {
+            setRequestedOrientation(newOrientation);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** 播放上一集 */
+    private void playPreviousEpisode() {
+        // TODO: 需要从 Intent 获取当前剧集索引，然后播放前一集
+        // 这里先显示 Toast 提示功能预留
+        Toast.makeText(this, "上一集功能预留", Toast.LENGTH_SHORT).show();
+    }
+
+    /** 播放下一集 */
+    private void playNextEpisode() {
+        // TODO: 需要从 Intent 获取当前剧集索引，然后播放下一集
+        Toast.makeText(this, "下一集功能预留", Toast.LENGTH_SHORT).show();
     }
 
     private void resizeSurface(int vw, int vh) {

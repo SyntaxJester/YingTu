@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- 视频输出：SurfaceView，三种内核(Exo/IJK/MPV)统一渲染到它的 Surface -->
+    <!-- 视频输出：SurfaceView，三种内核 (Exo/IJK/MPV) 统一渲染到它的 Surface -->
     <FrameLayout
         android:id="@+id/surfaceContainer"
         android:layout_width="match_parent"
@@ -21,6 +21,57 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center" />
     </FrameLayout>
+
+    <!-- PeekPro 风格中间控制组：上一集 / 播放暂停 / 下一集 -->
+    <LinearLayout
+        android:id="@+id/centerControls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#CC000000"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/btnPrev"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="10dp"
+            android:src="@drawable/ic_skip_previous"
+            android:contentDescription="上一集"
+            app:tint="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/ivCenterPlay"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="14dp"
+            android:src="@drawable/ic_pause"
+            android:contentDescription="播放/暂停"
+            app:tint="@android:color/white"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp" />
+
+        <ImageView
+            android:id="@+id/btnNext"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="10dp"
+            android:src="@drawable/ic_skip_next"
+            android:contentDescription="下一集"
+            app:tint="@android:color/white" />
+    </LinearLayout>
 
     <!-- 顶部返回 + 标题 -->
     <ImageView
