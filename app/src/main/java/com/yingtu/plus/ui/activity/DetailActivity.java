@@ -1,6 +1,7 @@
 package com.yingtu.plus.ui.activity;
 
 import android.content.Intent;
+import java.io.Serializable;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
@@ -132,6 +133,8 @@ public class DetailActivity extends BaseActivity {
         i.putExtra(PlayActivity.KEY_INDEX, seriesIndex);
         i.putExtra(PlayActivity.KEY_EPISODE, series.name);
         i.putExtra(PlayActivity.KEY_POSITION, resume);
+        // 传当前线路全部集数，供播放页上下集切换
+        i.putExtra(PlayActivity.KEY_SERIES, (Serializable) flag.list);
         startActivity(i);
     }
 

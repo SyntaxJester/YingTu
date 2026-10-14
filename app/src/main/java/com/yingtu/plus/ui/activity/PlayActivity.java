@@ -3,9 +3,11 @@ package com.yingtu.plus.ui.activity;
 import android.content.pm.ActivityInfo;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -18,6 +20,7 @@ import com.yingtu.plus.base.BaseActivity;
 import com.yingtu.plus.bean.History;
 import com.yingtu.plus.bean.ParseBean;
 import com.yingtu.plus.bean.SourceBean;
+import com.yingtu.plus.bean.VodInfo;
 import com.yingtu.plus.player.ParseJob;
 import com.yingtu.plus.player.core.AbstractPlayer;
 import com.yingtu.plus.player.core.PlayerFactory;
@@ -29,6 +32,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,11 +60,13 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     public static final String KEY_INDEX = "playIndex";
     public static final String KEY_EPISODE = "episodeName";
     public static final String KEY_POSITION = "position";
+    public static final String KEY_SERIES = "seriesList"; // 当前线路全部集数
 
     private static final float[] SPEEDS = {1.0f, 1.25f, 1.5f, 2.0f, 0.75f};
 
     private SurfaceView surfaceView;
     private TextView tvTitle, tvPosition, tvDuration, btnSpeed, btnCore;
+private String vodName;
     private ImageView btnPlayPause, ivCenterPlay, btnPrev, btnNext, btnDanmaku, btnFullscreen;
     private SeekBar seekBar;
     private View loading, centerControls, topControlBar, controlBar;
@@ -75,11 +81,22 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     private boolean dragging = false;
     private boolean prepared = false;
     private boolean isPortraitVideo = false;
-    private boolean controlsVisible = true;
+private boolean controlsVisible = true;
 
     // 当前解析出的播放参数（用于内核热切换时重放）
     private String playUrl;
     private Map<String, String> playHeaders = new HashMap<>();
+
+    // 上下集
+    private List<VodInfo.VodSeries> seriesList;
+    private int currentEpisodeIndex = 0;
+
+    // OSD
+    private View osdView;
+    private TextView osdContent;
+    private ImageView osdIcon;
+    private View osdHintLayout;
+    private Handler osdHideHandler;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable ticker = new Runnable() {
@@ -119,7 +136,16 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
+        vodName = title;
         resumePosition = getIntent().getLongExtra(KEY_POSITION, 0);
+
+        // 获取当前线路全部集数，用于上下集切换
+        seriesList = (List<VodInfo.VodSeries>) getIntent().getSerializableExtra(KEY_SERIES);
+        currentEpisodeIndex = getIntent().getIntExtra(KEY_INDEX, 0);
+        if (seriesList != null && !seriesList.isEmpty()) {
+            if (btnPrev != null) btnPrev.setEnabled(currentEpisodeIndex > 0);
+            if (btnNext != null) btnNext.setEnabled(currentEpisodeIndex < seriesList.size() - 1);
+        }
 
         // 点击事件
         find(R.id.ivBack).setOnClickListener(v -> finish());
@@ -143,10 +169,23 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
             return false;
         });
 
+        // 进度条拖动时显示快进/快退 OSD 提示
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {}
-            @Override public void onStartTrackingTouch(SeekBar s) { dragging = true; hideControls(); }
+            private boolean isSeek = false;
+
+            @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
+                if (fromUser && isSeek && player != null) {
+                    tvPosition.setText(formatTime(p));
+                    showOsdHint(formatSeekHint(p));
+                }
+            }
+            @Override public void onStartTrackingTouch(SeekBar s) {
+                isSeek = true;
+                dragging = true;
+                hideControls();
+            }
             @Override public void onStopTrackingTouch(SeekBar s) {
+                isSeek = false;
                 dragging = false;
                 if (player != null) player.seekTo(s.getProgress());
                 showControls();
@@ -393,14 +432,31 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
     /** 播放上一集 */
     private void playPreviousEpisode() {
-        // TODO: 需要从 Intent 获取当前剧集索引，然后播放前一集
-        // 这里先显示 Toast 提示功能预留
-        Toast.makeText(this, "上一集功能预留", Toast.LENGTH_SHORT).show();
+        if (seriesList == null || seriesList.isEmpty()) return;
+        int idx = currentEpisodeIndex;
+        if (idx <= 0) return;
+        currentEpisodeIndex = idx - 1;
+        playEpisodeAt(currentEpisodeIndex);
     }
 
     /** 播放下一集 */
     private void playNextEpisode() {
-        Toast.makeText(this, "下一集功能预留", Toast.LENGTH_SHORT).show();
+        if (seriesList == null || seriesList.isEmpty()) return;
+        int idx = currentEpisodeIndex;
+        if (idx >= seriesList.size() - 1) return;
+        currentEpisodeIndex = idx + 1;
+        playEpisodeAt(currentEpisodeIndex);
+    }
+
+    private void playEpisodeAt(int index) {
+        VodInfo.VodSeries s = seriesList.get(index);
+        String title = vodName + " " + s.name;
+        if (btnPrev != null) btnPrev.setEnabled(index > 0);
+        if (btnNext != null) btnNext.setEnabled(index < seriesList.size() - 1);
+        tvTitle.setText(title);
+        releasePlayer();
+        createPlayer();
+        resolveAndPlay(s.url);
     }
 
     /** 切换控制层显示/隐藏 */
@@ -432,6 +488,54 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         if (topControlBar != null) topControlBar.setVisibility(View.GONE);
         if (controlBar != null) controlBar.setVisibility(View.GONE);
         if (centerControls != null) centerControls.setVisibility(View.GONE);
+    }
+
+    /** 显示 OSD 提示（快进/快退/音量/亮度） */
+    private void showOsdHint(String text) {
+        if (osdView == null) {
+            osdView = LayoutInflater.from(this).inflate(R.layout.view_osd, null);
+            // 使用已有的 seekHint 布局显示快进/快退提示
+            View seekHint = osdView.findViewById(R.id.seekHint);
+            TextView seekTime = osdView.findViewById(R.id.seekTime);
+            ImageView seekIcon = osdView.findViewById(R.id.seekIcon);
+            osdContent = seekTime;
+            osdIcon = seekIcon;
+            osdHintLayout = seekHint;
+            ((ViewGroup) findViewById(R.id.surfaceContainer)).addView(osdView);
+        }
+        if (text != null && text.startsWith("快退")) {
+            if (osdIcon != null) osdIcon.setImageResource(R.drawable.ic_fast_rewind);
+        } else if (osdIcon != null) {
+            osdIcon.setImageResource(R.drawable.ic_fast_forward);
+        }
+        osdContent.setText(text);
+        if (osdHintLayout != null) {
+            osdHintLayout.setVisibility(View.VISIBLE);
+        }
+        if (osdHideHandler == null) osdHideHandler = new Handler(Looper.getMainLooper());
+        osdHideHandler.removeCallbacksAndMessages(null);
+        osdHideHandler.postDelayed(() -> {
+            if (osdHintLayout != null) osdHintLayout.setVisibility(View.GONE);
+        }, 1200);
+    }
+
+    private int dp2px(float dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private String formatTime(long ms) {
+        long total = ms / 1000;
+        long h = total / 3600;
+        long m = (total % 3600) / 60;
+        long s = total % 60;
+        if (h > 0) return String.format("%d:%02d:%02d", h, m, s);
+        return String.format("%02d:%02d", m, s);
+    }
+
+    private String formatSeekHint(int progress) {
+        long delta = progress - (player != null ? player.getCurrentPosition() : 0);
+        String sign = delta >= 0 ? "快进" : "快退";
+        return sign + " " + formatTime(Math.abs(delta));
     }
 
     /** 切换全屏模式 */
