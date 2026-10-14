@@ -10,8 +10,8 @@ android {
         applicationId "com.yingtu.plus"
         minSdk 24
         targetSdk 28
-        versionCode 17
-        versionName "1.9.7"
+        versionCode 18
+        versionName "1.9.8"
         vectorDrawables.useSupportLibrary = true
         ndk {
             // 只保留 ARM ABI：IJK/MPV 的 x86 .so 体积大且真机基本用不到
