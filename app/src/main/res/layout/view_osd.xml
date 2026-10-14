@@ -35,7 +35,7 @@
             android:fontFamily="monospace"
             android:textColor="@android:color/white"
             android:textSize="16sp"
-            tools:text "+10:00" />
+            tools:text="+10:00" />
     </LinearLayout>
 
     <!-- 亮度调节 -->
