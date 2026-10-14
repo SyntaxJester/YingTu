@@ -1,14 +1,20 @@
 package com.yingtu.plus.ui.activity;
 
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.yingtu.plus.R;
 import com.yingtu.plus.api.ApiConfig;
@@ -63,6 +69,15 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     private ImageView btnPlayPause;
     private SeekBar seekBar;
     private View loading;
+    
+    // New PeekPro-style controls
+    private View centerPlay, centerCtrls, toolbar, bottomBar, danmakuPanel;
+    private View btnBack, btnFullscreen, btnScreenshot, btnDanmaku;
+    private View btnPrevEp, btnCenterPlay, btnNextEp;
+    private View btnBottomNext, btnBottomPause, btnBottomPrev;
+    private View btnBottomDanmaku, btnBottomFullscreen;
+    private EditText etDanmaku;
+    private SwitchCompat swDanmakuOn;
 
     private AbstractPlayer player;
     private ParseJob parseJob;
@@ -92,6 +107,7 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
 
     @Override
     protected void init() {
+        // Original SurfaceView player (kept working logic)
         surfaceView = find(R.id.surfaceView);
         tvTitle = find(R.id.tvTitle);
         tvPosition = find(R.id.tvPosition);
@@ -102,15 +118,56 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         seekBar = find(R.id.seekBar);
         loading = find(R.id.loading);
 
+        // New PeekPro-style controls
+        centerPlay = find(R.id.centerPlay);
+        centerCtrls = find(R.id.centerCtrls);
+        toolbar = find(R.id.toolbar);
+        bottomBar = find(R.id.bottomBar);
+        danmakuPanel = find(R.id.danmakuPanel);
+        btnBack = find(R.id.btnBack);
+        btnFullscreen = find(R.id.btnFullscreen);
+        btnScreenshot = find(R.id.btnScreenshot);
+        btnDanmaku = find(R.id.btnDanmaku);
+        btnPrevEp = find(R.id.btnPrevEp);
+        btnCenterPlay = find(R.id.btnCenterPlay);
+        btnNextEp = find(R.id.btnNextEp);
+        btnBottomNext = find(R.id.btnBottomNext);
+        btnBottomPause = find(R.id.btnBottomPause);
+        btnBottomPrev = find(R.id.btnBottomPrev);
+        btnBottomDanmaku = find(R.id.btnBottomDanmaku);
+        btnBottomFullscreen = find(R.id.btnBottomFullscreen);
+        etDanmaku = find(R.id.etDanmaku);
+        swDanmakuOn = find(R.id.swDanmakuOn);
+
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
         resumePosition = getIntent().getLongExtra(KEY_POSITION, 0);
 
-        find(R.id.ivBack).setOnClickListener(v -> finish());
+        // Original click handlers
+        btnBack.setOnClickListener(v -> finish());
         btnPlayPause.setOnClickListener(v -> togglePlay());
         btnSpeed.setOnClickListener(v -> cycleSpeed());
         btnCore.setOnClickListener(v -> switchCore());
         btnCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
+        
+        // New PeekPro-style click handlers
+        centerPlay.setOnClickListener(v -> togglePlay());
+        btnCenterPlay.setOnClickListener(v -> togglePlay());
+        btnPrevEp.setOnClickListener(v -> prevEpisode());
+        btnNextEp.setOnClickListener(v -> nextEpisode());
+        btnBottomPause.setOnClickListener(v -> togglePlay());
+        btnBottomPrev.setOnClickListener(v -> prevEpisode());
+        btnBottomNext.setOnClickListener(v -> nextEpisode());
+        btnFullscreen.setOnClickListener(v -> toggleFullscreen());
+        btnBottomFullscreen.setOnClickListener(v -> toggleFullscreen());
+        btnDanmaku.setOnClickListener(v -> showDanmakuPanel());
+        btnBottomDanmaku.setOnClickListener(v -> showDanmakuPanel());
+        btnScreenshot.setOnClickListener(v -> takeScreenshot());
+        
+        // Danmaku panel handlers
+        find(R.id.btnDanmakuClose).setOnClickListener(v -> hideDanmakuPanel());
+        find(R.id.btnDanmakuSend).setOnClickListener(v -> sendDanmaku());
+        swDanmakuOn.setOnCheckedChangeListener((b, c) -> toggleDanmakuEnabled(c));
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {}
@@ -401,5 +458,68 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
         } catch (Throwable ignored) {
         }
         return map;
+    }
+
+    // ===== New PeekPro-style features =====
+
+    /** 上一集 */
+    private void prevEpisode() {
+        Toast.makeText(this, "上一集", Toast.LENGTH_SHORT).show();
+        // TODO: 调用 DetailActivity 的上一集逻辑
+    }
+
+    /** 下一集 */
+    private void nextEpisode() {
+        Toast.makeText(this, "下一集", Toast.LENGTH_SHORT).show();
+        // TODO: 调用 DetailActivity 的下一集逻辑
+    }
+
+    /** 全屏切换 */
+    private void toggleFullscreen() {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
+    }
+
+    /** 显示弹幕面板 */
+    private void showDanmakuPanel() {
+        danmakuPanel.setVisibility(View.VISIBLE);
+        bottomBar.setVisibility(View.GONE);
+    }
+
+    /** 隐藏弹幕面板 */
+    private void hideDanmakuPanel() {
+        danmakuPanel.setVisibility(View.GONE);
+        bottomBar.setVisibility(View.VISIBLE);
+    }
+
+    /** 发送弹幕 */
+    private void sendDanmaku() {
+        String text = etDanmaku.getText().toString().trim();
+        if (text.isEmpty()) {
+            Toast.makeText(this, "请输入弹幕内容", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Toast.makeText(this, "弹幕已发送：" + text, Toast.LENGTH_SHORT).show();
+        etDanmaku.setText("");
+        // TODO: 接入真实的弹幕服务
+    }
+
+    /** 切换弹幕开关 */
+    private void toggleDanmakuEnabled(boolean enabled) {
+        Toast.makeText(this, enabled ? "弹幕已开启" : "弹幕已关闭", Toast.LENGTH_SHORT).show();
+        // TODO: 控制弹幕显示/隐藏
+    }
+
+    /** 截图 */
+    private void takeScreenshot() {
+        if (surfaceView == null || surfaceView.getHolder().getSurface() == null) {
+            Toast.makeText(this, "无法截图", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // TODO: 实现截图保存到相册
+        Toast.makeText(this, "截图功能开发中", Toast.LENGTH_SHORT).show();
     }
 }

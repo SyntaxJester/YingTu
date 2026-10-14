@@ -90,7 +90,7 @@ public class HomeActivity extends BaseActivity {
                 .inflate(R.layout.dialog_source_picker, null);
 
         sourcePopup = new PopupWindow(popupView,
-                (int) (getResources().getDisplayMetrics().widthPixels * 0.92),
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.8),
                 ViewGroup.LayoutParams.WRAP_CONTENT, true);
         sourcePopup.setOutsideTouchable(true);
         sourcePopup.setBackgroundDrawable(null);
@@ -128,15 +128,18 @@ public class HomeActivity extends BaseActivity {
     private void buildChips() {
         chipContainer.removeAllViews();
         final List<String> chips = sourceAdapter.getChipList();
+        final String currentChip = sourceAdapter.getFilterChip();
         for (int i = 0; i < chips.size(); i++) {
             final String chipText = chips.get(i);
-            final boolean isDefault = (i == 0);
+            final boolean isChecked = chipText.equals(currentChip);
             Chip c = new Chip(this);
             c.setText(chipText);
             c.setCheckable(true);
-            c.setChecked(isDefault);
+            c.setChecked(isChecked);
             c.setOnClickListener(v -> {
                 sourceAdapter.setFilterChip(chipText);
+                // Rebuild chips to update checked states
+                buildChips();
             });
             chipContainer.addView(c);
         }

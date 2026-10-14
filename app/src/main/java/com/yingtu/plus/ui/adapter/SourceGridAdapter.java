@@ -48,6 +48,11 @@ public class SourceGridAdapter extends RecyclerView.Adapter<SourceGridAdapter.VH
         notifyDataSetChanged();
     }
 
+    /** 当前选中的分类 chip 文本，供 UI 同步选中状态 */
+    public String getFilterChip() {
+        return filterChip;
+    }
+
     public void setSearch(String keyword) {
         this.searchKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
         applyFilter();
