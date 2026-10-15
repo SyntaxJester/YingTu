@@ -1,19 +1,20 @@
 package com.yingtu.plus.ui.activity;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.WindowManager.LayoutParams;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +30,7 @@ import com.yingtu.plus.bean.VodInfo;
 import com.yingtu.plus.player.ParseJob;
 import com.yingtu.plus.player.core.AbstractPlayer;
 import com.yingtu.plus.player.core.PlayerFactory;
+import com.yingtu.plus.ui.custom.PlayerGestureController;
 import com.yingtu.plus.util.HistoryHelper;
 import com.yingtu.plus.util.OkGo;
 import com.yingtu.plus.util.Sniffer;
@@ -45,14 +47,20 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 播放页。支持可切换播放内核（ExoPlayer / IJK / MPV）。
+ * 播放页（B+ 方案：webhtv 交互层移植）。
  *
- * 视频统一渲染到 SurfaceView；内核由 {@link PlayerFactory} 按设置创建，
- * 通过 {@link AbstractPlayer} 统一接口驱动，自绘控制条（播放/进度/倍速/内核切换）。
+ * UI 层移植自 webhtv/webhtv：
+ *  - 中央手势反馈小组件（seek/bright/volume/speed 四个 widget，view_widget_player.xml）
+ *  - 手势状态机 PlayerGestureController（左滑快退右滑快进 / 左右半屏上下滑亮度音量 /
+ *    长按倍速 / 双指捏合缩放 / 双击暂停 / 快速上滑下一集 / 快速下滑上一集）
+ *  - PeekPro 风格中间控制组（上一集/播放暂停/下一集）
+ *  - 顶部控制栏（返回/标题/内核切换/全屏）+ 底部控制条（播放/进度/倍速）
  *
- * 解析链路同前：CSP 站点先 spider.playerContent 取真实直链，再按需二次解析。
+ * 播放内核保留 ExoPlayer（Media3 1.2.1，经 AbstractPlayer 统一接口驱动），
+ * 不引入 webhtv 的 media3 fork / MPV / IJK so。
  */
-public class PlayActivity extends BaseActivity implements AbstractPlayer.Listener {
+public class PlayActivity extends BaseActivity
+        implements AbstractPlayer.Listener, PlayerGestureController.Listener {
 
     public static final String KEY_TITLE = "title";
     public static final String KEY_URL = "url";
@@ -68,15 +76,26 @@ public class PlayActivity extends BaseActivity implements AbstractPlayer.Listene
     public static final String KEY_SERIES = "seriesList"; // 当前线路全部集数
 
     private static final float[] SPEEDS = {1.0f, 1.25f, 1.5f, 2.0f, 0.75f};
+    private static final long HIDE_CONTROLS_MS = 5000;
+    private static final long HIDE_WIDGET_MS = 1200;
 
     private SurfaceView surfaceView;
     private TextView tvTitle, tvPosition, tvDuration, btnSpeed, btnCore;
-private String vodName;
     private ImageView btnPlayPause, ivCenterPlay, btnPrev, btnNext, btnDanmaku, btnFullscreen;
     private SeekBar seekBar;
     private View loading, centerControls, topControlBar, controlBar;
-    private Handler hideHandler = new Handler(Looper.getMainLooper());
-    private Runnable hideControlsRunnable;
+
+    // 手势反馈小组件（webhtv widget 布局）
+    private View seekWidget, brightWidget, volumeWidget, speedWidget;
+    private TextView seekTime;
+    private ImageView seekIcon, brightIcon, volumeIcon;
+    private ProgressBar brightProgress, volumeProgress;
+    private Handler osdHideHandler;
+    private String toastOsd;
+
+    // 手势
+    private PlayerGestureController gesture;
+    private long seekBasePosition;
 
     private AbstractPlayer player;
     private ParseJob parseJob;
@@ -84,28 +103,16 @@ private String vodName;
     private long resumePosition = 0;
     private int speedIndex = 0;
     private boolean dragging = false;
-    private boolean prepared = false;
-    private boolean isPortraitVideo = false;
-private boolean controlsVisible = true;
+    private boolean controlsVisible = true;
 
-    // 当前解析出的播放参数（用于内核热切换时重放）
+    // 当前解析出的播放参数（内核热切换时重放）
     private String playUrl;
     private Map<String, String> playHeaders = new HashMap<>();
 
     // 上下集
     private List<VodInfo.VodSeries> seriesList;
     private int currentEpisodeIndex = 0;
-
-    // OSD
-    private View osdView;
-    private TextView osdContent;
-    private ImageView osdIcon;
-    private View osdHintLayout;
-    private LinearLayout osdTopLeft, osdTopRight, osdBottomLeft, osdBottomRight;
-    private Handler osdHideHandler;
-    private AudioManager audioManager;
-    private float gestureStartY = 0;
-    private boolean isBrightnessGesture = false;
+    private String vodName;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable ticker = new Runnable() {
@@ -116,12 +123,16 @@ private boolean controlsVisible = true;
         }
     };
 
+    private final Handler hideHandler = new Handler(Looper.getMainLooper());
+    private Runnable hideControlsRunnable;
+
     @Override
     protected int getLayoutId() {
         return R.layout.activity_play;
     }
 
     @Override
+    @SuppressLint("ClickableViewAccessibility")
     protected void init() {
         surfaceView = find(R.id.surfaceView);
         tvTitle = find(R.id.tvTitle);
@@ -132,8 +143,7 @@ private boolean controlsVisible = true;
         btnPlayPause = find(R.id.btnPlayPause);
         seekBar = find(R.id.seekBar);
         loading = find(R.id.loading);
-        
-        // 新控制栏
+
         topControlBar = find(R.id.topControlBar);
         controlBar = find(R.id.controlBar);
         centerControls = find(R.id.centerControls);
@@ -143,120 +153,103 @@ private boolean controlsVisible = true;
         btnDanmaku = find(R.id.btnDanmaku);
         btnFullscreen = find(R.id.btnFullscreen);
 
-        // OSD 四角显示区域
-        osdTopLeft = find(R.id.osdTopLeft);
-        osdTopRight = find(R.id.osdTopRight);
-        osdBottomLeft = find(R.id.osdBottomLeft);
-        osdBottomRight = find(R.id.osdBottomRight);
+        // ===== 手势反馈小组件（webhtv widget 布局）=====
+        seekWidget = find(R.id.seekWidget);
+        brightWidget = find(R.id.brightWidget);
+        volumeWidget = find(R.id.volumeWidget);
+        speedWidget = find(R.id.speedWidget);
+        seekTime = find(R.id.seekTime);
+        seekIcon = find(R.id.seekIcon);
+        brightIcon = find(R.id.brightIcon);
+        volumeIcon = find(R.id.volumeIcon);
+        brightProgress = find(R.id.brightProgress);
+        volumeProgress = find(R.id.volumeProgress);
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
         vodName = title;
         resumePosition = getIntent().getLongExtra(KEY_POSITION, 0);
 
-        // 获取当前线路全部集数，用于上下集切换
+        // 当前线路全部集数（上下集切换）
         seriesList = (List<VodInfo.VodSeries>) getIntent().getSerializableExtra(KEY_SERIES);
         currentEpisodeIndex = getIntent().getIntExtra(KEY_INDEX, 0);
         if (seriesList != null && !seriesList.isEmpty()) {
-            if (btnPrev != null) btnPrev.setEnabled(currentEpisodeIndex > 0);
-            if (btnNext != null) btnNext.setEnabled(currentEpisodeIndex < seriesList.size() - 1);
+            btnPrev.setEnabled(currentEpisodeIndex > 0);
+            btnNext.setEnabled(currentEpisodeIndex < seriesList.size() - 1);
         }
 
-        // 点击事件
+        // ===== 点击事件 =====
         find(R.id.ivBack).setOnClickListener(v -> finish());
-        find(R.id.ivBackOld).setOnClickListener(v -> finish());
         btnPlayPause.setOnClickListener(v -> togglePlay());
-        if (ivCenterPlay != null) ivCenterPlay.setOnClickListener(v -> togglePlay());
-        if (btnPrev != null) btnPrev.setOnClickListener(v -> playPreviousEpisode());
-        if (btnNext != null) btnNext.setOnClickListener(v -> playNextEpisode());
+        ivCenterPlay.setOnClickListener(v -> togglePlay());
+        btnPrev.setOnClickListener(v -> playPreviousEpisode());
+        btnNext.setOnClickListener(v -> playNextEpisode());
         if (btnDanmaku != null) btnDanmaku.setOnClickListener(v -> toggleDanmaku());
-        if (btnFullscreen != null) btnFullscreen.setOnClickListener(v -> toggleFullscreen());
+        btnFullscreen.setOnClickListener(v -> toggleFullscreen());
         btnSpeed.setOnClickListener(v -> cycleSpeed());
         btnCore.setOnClickListener(v -> switchCore());
         btnCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
 
-        // 点击屏幕任意位置显示/隐藏控制层
-        findViewById(R.id.surfaceContainer).setOnClickListener(v -> toggleControls());
-        
-        // 手势：左半屏上下滑调亮度，右半屏上下滑调音量
-        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int screenHeight = wm.getDefaultDisplay().getHeight();
-        findViewById(R.id.surfaceContainer).setOnTouchListener((v, event) -> {
-            int action = event.getActionMasked();
-            if (action == android.view.MotionEvent.ACTION_DOWN) {
-                showControls();
-                gestureStartY = event.getRawY();
-                float x = event.getRawX();
-                isBrightnessGesture = x < screenHeight * 0.5f ? false : true; // 左屏音量，右屏亮度
-                return true;
-            }
-            if (action == android.view.MotionEvent.ACTION_MOVE && !dragging) {
-                float deltaY = gestureStartY - event.getRawY();
-                if (Math.abs(deltaY) < 5) return true;
-                if (isBrightnessGesture) {
-                    float cur = getWindow().getAttributes().screenBrightness;
-                    if (cur < 0) cur = 0.5f;
-                    float newB = Math.max(0.01f, Math.min(1.0f, cur + deltaY / screenHeight));
-                    setBrightness(newB);
-                    String hint = "亮度 " + (int) (newB * 100) + "%";
-                    showOsdBottomRight(hint);
-                    gestureStartY = event.getRawY();
-                } else {
-                    int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                    int deltaVol = (int) (deltaY / screenHeight * maxVolume);
-                    int newVol = Math.max(0, Math.min(maxVolume, curVol + deltaVol));
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0);
-                    String hint = "音量 " + newVol + "/" + maxVolume;
-                    showOsdBottomRight(hint);
-                    gestureStartY = event.getRawY();
-                }
-                return true;
-            }
-            return false;
+        // ===== 手势（webhtv CustomKeyDown 移植版）=====
+        View gestureLayer = find(R.id.surfaceContainer);
+        gesture = PlayerGestureController.create(this, surfaceView);
+        gestureLayer.setOnTouchListener((v, event) -> {
+            showControls();
+            return gesture.onTouchEvent(event);
         });
 
-        // 进度条拖动时显示快进/快退 OSD 提示
+        // 进度条拖动（与手势共存：拖动时屏蔽手势 seek 提示）
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             private boolean isSeek = false;
 
-            @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
-                if (fromUser && isSeek && player != null) {
+            @Override
+            public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
+                if (fromUser) {
                     tvPosition.setText(formatTime(p));
-                    showOsdHint(formatSeekHint(p));
+                    if (isSeek && player != null) showSeekWidget(player.getCurrentPosition(), p, false);
                 }
             }
-            @Override public void onStartTrackingTouch(SeekBar s) {
+
+            @Override
+            public void onStartTrackingTouch(SeekBar s) {
                 isSeek = true;
                 dragging = true;
-                hideControls();
             }
-            @Override public void onStopTrackingTouch(SeekBar s) {
+
+            @Override
+            public void onStopTrackingTouch(SeekBar s) {
                 isSeek = false;
                 dragging = false;
                 if (player != null) player.seekTo(s.getProgress());
-                showControls();
             }
         });
 
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override public void surfaceCreated(SurfaceHolder holder) {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
                 if (player != null) player.setSurface(holder.getSurface());
             }
-            @Override public void surfaceChanged(SurfaceHolder h, int f, int w, int ht) {}
-            @Override public void surfaceDestroyed(SurfaceHolder holder) {
+
+            @Override
+            public void surfaceChanged(SurfaceHolder h, int f, int w, int ht) {
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
                 if (player != null) player.setSurface(null);
             }
         });
 
+        osdHideHandler = new Handler(Looper.getMainLooper());
+
         buildHistory();
         createPlayer();
         resolveAndPlay(getIntent().getStringExtra(KEY_URL));
-        
-        // 初始显示控制层
+
         showControls();
     }
+
+    // ================= 历史 =================
 
     private void buildHistory() {
         String sourceKey = getIntent().getStringExtra(KEY_SOURCE);
@@ -276,6 +269,8 @@ private boolean controlsVisible = true;
         HistoryHelper.save(history);
     }
 
+    // ================= 播放内核 =================
+
     private void createPlayer() {
         player = PlayerFactory.create(this);
         player.setListener(this);
@@ -284,7 +279,7 @@ private boolean controlsVisible = true;
         }
     }
 
-    // ===== 解析 =====
+    // ================= 解析链路（CSP spider → 二次解析）=================
 
     private void resolveAndPlay(String url) {
         if (url == null || url.isEmpty()) {
@@ -302,7 +297,7 @@ private boolean controlsVisible = true;
         String flagName = getIntent().getStringExtra(KEY_FLAG_NAME);
         final String flag = flagName == null ? "" : flagName;
         VodSpider.executor().execute(() -> {
-            String url = episodeUrl;
+            String u = episodeUrl;
             Map<String, String> headers = new HashMap<>();
             boolean needParse = false;
             try {
@@ -311,17 +306,20 @@ private boolean controlsVisible = true;
                 String json = spider.playerContent(flag, episodeUrl, vipFlags);
                 if (json != null && json.trim().startsWith("{")) {
                     JsonObject o = JsonParser.parseString(json).getAsJsonObject();
-                    String u = optString(o, "url");
-                    if (!u.isEmpty()) url = u;
+                    String du = optString(o, "url");
+                    if (!du.isEmpty()) u = du;
                     if (o.has("parse") && !o.get("parse").isJsonNull()) {
-                        try { needParse = o.get("parse").getAsInt() == 1; } catch (Throwable ignored) {}
+                        try {
+                            needParse = o.get("parse").getAsInt() == 1;
+                        } catch (Throwable ignored) {
+                        }
                     }
                     if (o.has("header")) headers.putAll(parseHeader(o.get("header")));
                 }
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-            final String fUrl = url;
+            final String fUrl = u;
             final Map<String, String> fHeaders = headers;
             final boolean fParse = needParse;
             OkGo.main(() -> {
@@ -333,28 +331,31 @@ private boolean controlsVisible = true;
 
     private void afterUrlResolved(String url, Map<String, String> headers) {
         if (Sniffer.needParse(url)) runParse(url, headers);
-        else playUrl(url, headers);
+        else startPlay(url, headers);
     }
 
     private void runParse(String url, Map<String, String> baseHeaders) {
         loading.setVisibility(View.VISIBLE);
         ParseBean parse = ApiConfig.get().getDefaultParse();
         parseJob = ParseJob.create(new ParseJob.Callback() {
-            @Override public void onParseSuccess(Map<String, String> headers, String directUrl) {
+            @Override
+            public void onParseSuccess(Map<String, String> headers, String directUrl) {
                 Map<String, String> merged = new HashMap<>(baseHeaders);
                 if (headers != null) merged.putAll(headers);
-                playUrl(directUrl, merged);
+                startPlay(directUrl, merged);
             }
-            @Override public void onParseError() {
+
+            @Override
+            public void onParseError() {
                 loading.setVisibility(View.GONE);
                 Toast.makeText(PlayActivity.this, "解析失败，该资源可能需要专用解析接口", Toast.LENGTH_LONG).show();
             }
         }).start(parse, url);
     }
 
-    // ===== 播放 =====
+    // ================= 播放控制 =================
 
-    private void playUrl(String url, Map<String, String> headers) {
+    private void startPlay(String url, Map<String, String> headers) {
         if (isFinishing() || player == null) return;
         if (url == null || url.isEmpty()) {
             loading.setVisibility(View.GONE);
@@ -363,7 +364,6 @@ private boolean controlsVisible = true;
         }
         this.playUrl = url;
         this.playHeaders = headers == null ? new HashMap<>() : headers;
-        prepared = false;
         loading.setVisibility(View.VISIBLE);
         player.setDataSource(url, this.playHeaders);
         if (surfaceView.getHolder().getSurface() != null) player.setSurface(surfaceView.getHolder().getSurface());
@@ -374,19 +374,24 @@ private boolean controlsVisible = true;
         if (player == null) return;
         if (player.isPlaying()) {
             player.pause();
-            btnPlayPause.setImageResource(R.drawable.ic_play);
+            setPlayIcon(false);
         } else {
             player.start();
-            btnPlayPause.setImageResource(R.drawable.ic_pause);
+            setPlayIcon(true);
         }
+    }
+
+    private void setPlayIcon(boolean playing) {
+        btnPlayPause.setImageResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
+        ivCenterPlay.setImageResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
     }
 
     private void cycleSpeed() {
         speedIndex = (speedIndex + 1) % SPEEDS.length;
         float sp = SPEEDS[speedIndex];
         if (player != null) player.setSpeed(sp);
-        btnSpeed.setText(String.format(Locale.US, "%.2gx", sp).replace("1.0x", "1.0x"));
         btnSpeed.setText(sp + "x");
+        showWidgetHint(speedWidget, HIDE_WIDGET_MS);
     }
 
     /** 热切换内核：释放当前内核，用新内核从当前进度重放。 */
@@ -397,10 +402,10 @@ private boolean controlsVisible = true;
         Toast.makeText(this, "已切换内核：" + PlayerFactory.coreName(next), Toast.LENGTH_SHORT).show();
 
         long pos = player != null ? player.getCurrentPosition() : 0;
-        resumePosition = pos > 0 ? pos : resumePosition;
+        if (pos > 0) resumePosition = pos;
         releasePlayer();
         createPlayer();
-        if (playUrl != null) playUrl(playUrl, playHeaders);
+        if (playUrl != null) startPlay(playUrl, playHeaders);
     }
 
     private void updateProgress() {
@@ -410,75 +415,108 @@ private boolean controlsVisible = true;
         if (dur > 0) {
             seekBar.setMax((int) dur);
             seekBar.setProgress((int) pos);
-            tvPosition.setText(fmt(pos));
-            tvDuration.setText(fmt(dur));
+            tvPosition.setText(formatTime(pos));
+            tvDuration.setText(formatTime(dur));
         }
     }
 
-    private static String fmt(long ms) {
-        if (ms < 0) ms = 0;
-        long s = ms / 1000, m = s / 60, h = m / 60;
-        if (h > 0) return String.format(Locale.US, "%d:%02d:%02d", h, m % 60, s % 60);
-        return String.format(Locale.US, "%02d:%02d", m, s % 60);
+    // ================= 手势反馈（PlayerGestureController.Listener）=================
+
+    @Override
+    public void onSeeking(long time) {
+        if (player == null) return;
+        long base = seekBasePosition;
+        if (base == 0) {
+            base = player.getCurrentPosition();
+            seekBasePosition = base;
+        }
+        long target = Math.max(0, base + time);
+        showSeekWidget(base, target, true);
     }
 
-    // ===== AbstractPlayer.Listener =====
-
-    @Override public void onPrepared() {
-        prepared = true;
-        loading.setVisibility(View.GONE);
-        if (resumePosition > 0) player.seekTo(resumePosition);
-        player.setSpeed(SPEEDS[speedIndex]);
-        player.start();
-        btnPlayPause.setImageResource(R.drawable.ic_pause);
-        ui.removeCallbacks(ticker);
-        ui.post(ticker);
+    @Override
+    public void onSeekEnd(long time) {
+        if (player == null) return;
+        long base = seekBasePosition;
+        long target = Math.max(0, base + time);
+        seekBasePosition = 0;
+        if (target > 0 && player.getDuration() > 0) {
+            player.seekTo(Math.min(target, player.getDuration()));
+        }
+        hideWidget(seekWidget);
     }
 
-    @Override public void onCompletion() {
-        btnPlayPause.setImageResource(R.drawable.ic_play);
-    }
-
-    @Override public void onBuffering(boolean buffering) {
-        loading.setVisibility(buffering ? View.VISIBLE : View.GONE);
-    }
-
-    @Override public void onError(String message) {
-        loading.setVisibility(View.GONE);
-        Toast.makeText(this, "播放失败：" + message + "（可点右上角切换内核重试）", Toast.LENGTH_LONG).show();
-    }
-
-    @Override public void onVideoSizeChanged(int width, int height) {
-        resizeSurface(width, height);
-        adjustOrientation(width, height);
-    }
-
-    /** 根据视频宽高比自动调整屏幕方向：竖屏短剧用竖屏，横屏影视用横屏 */
-    private void adjustOrientation(int width, int height) {
-        if (width <= 0 || height <= 0) return;
-        float aspectRatio = (float) width / height;
-        boolean wasPortrait = isPortraitVideo;
-        
-        // 宽高比 < 0.8 认为是竖屏视频（如 9:16 ≈ 0.56，720x1280 ≈ 0.56）
-        isPortraitVideo = aspectRatio < 0.8f;
-        
-        if (wasPortrait == isPortraitVideo) return; // 方向没变，跳过
-        
-        int newOrientation;
-        if (isPortraitVideo) {
-            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+    @Override
+    public void onBright(int progress) {
+        if (brightWidget == null) return;
+        brightProgress.setProgress(progress);
+        if (progress >= 60) {
+            brightIcon.setImageResource(R.drawable.ic_brightness_high);
         } else {
-            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            brightIcon.setImageResource(R.drawable.ic_brightness);
         }
-        
-        try {
-            setRequestedOrientation(newOrientation);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        showWidgetHint(brightWidget, HIDE_WIDGET_MS);
     }
 
-    /** 播放上一集 */
+    @Override
+    public void onBrightEnd(float value) {
+    }
+
+    @Override
+    public void onVolume(int progress) {
+        if (volumeWidget == null) return;
+        volumeProgress.setProgress(progress);
+        if (progress >= 60) {
+            volumeIcon.setImageResource(R.drawable.ic_volume_high);
+        } else {
+            volumeIcon.setImageResource(R.drawable.ic_volume_up);
+        }
+        showWidgetHint(volumeWidget, HIDE_WIDGET_MS);
+    }
+
+    @Override
+    public void onSpeedUp() {
+        if (player != null) {
+            player.setSpeed(2.0f);
+        }
+        showWidgetHint(speedWidget, HIDE_WIDGET_MS);
+    }
+
+    @Override
+    public void onSpeedEnd() {
+        if (player != null) {
+            player.setSpeed(SPEEDS[speedIndex]);
+        }
+        hideWidget(speedWidget);
+    }
+
+    @Override
+    public void onFlingUp() {
+        playNextEpisode();
+    }
+
+    @Override
+    public void onFlingDown() {
+        playPreviousEpisode();
+    }
+
+    @Override
+    public void onSingleTap() {
+        toggleControls();
+    }
+
+    @Override
+    public void onDoubleTap() {
+        togglePlay();
+    }
+
+    @Override
+    public void onTouchEnd() {
+        seekBasePosition = 0;
+    }
+
+    // ================= 上下集 =================
+
     private void playPreviousEpisode() {
         if (seriesList == null || seriesList.isEmpty()) return;
         int idx = currentEpisodeIndex;
@@ -487,7 +525,6 @@ private boolean controlsVisible = true;
         playEpisodeAt(currentEpisodeIndex);
     }
 
-    /** 播放下一集 */
     private void playNextEpisode() {
         if (seriesList == null || seriesList.isEmpty()) return;
         int idx = currentEpisodeIndex;
@@ -499,124 +536,133 @@ private boolean controlsVisible = true;
     private void playEpisodeAt(int index) {
         VodInfo.VodSeries s = seriesList.get(index);
         String title = vodName + " " + s.name;
-        if (btnPrev != null) btnPrev.setEnabled(index > 0);
-        if (btnNext != null) btnNext.setEnabled(index < seriesList.size() - 1);
+        btnPrev.setEnabled(index > 0);
+        btnNext.setEnabled(index < seriesList.size() - 1);
         tvTitle.setText(title);
         releasePlayer();
         createPlayer();
         resolveAndPlay(s.url);
     }
 
-    /** 切换控制层显示/隐藏 */
+    // ================= 控制层显隐 =================
+
     private void toggleControls() {
-        if (controlsVisible) {
-            hideControls();
-        } else {
-            showControls();
-        }
+        if (controlsVisible) hideControls();
+        else showControls();
     }
 
-    /** 显示控制层 */
     private void showControls() {
         controlsVisible = true;
-        if (topControlBar != null) topControlBar.setVisibility(View.VISIBLE);
-        if (controlBar != null) controlBar.setVisibility(View.VISIBLE);
-        if (centerControls != null) centerControls.setVisibility(View.VISIBLE);
-        
-        // 3 秒后自动隐藏
+        topControlBar.setVisibility(View.VISIBLE);
+        controlBar.setVisibility(View.VISIBLE);
+        centerControls.setVisibility(View.VISIBLE);
         hideHandler.removeCallbacks(hideControlsRunnable);
-        hideControlsRunnable = this::hideControls;
-        hideHandler.postDelayed(hideControlsRunnable, 3000);
+        hideControlsRunnable = () -> {
+            if (controlsVisible) hideControls();
+        };
+        hideHandler.postDelayed(hideControlsRunnable, HIDE_CONTROLS_MS);
     }
 
-    /** 隐藏控制层 */
     private void hideControls() {
         controlsVisible = false;
         hideHandler.removeCallbacks(hideControlsRunnable);
-        if (topControlBar != null) topControlBar.setVisibility(View.GONE);
-        if (controlBar != null) controlBar.setVisibility(View.GONE);
-        if (centerControls != null) centerControls.setVisibility(View.GONE);
+        topControlBar.setVisibility(View.GONE);
+        controlBar.setVisibility(View.GONE);
+        centerControls.setVisibility(View.GONE);
     }
 
-    /** 显示 OSD 提示（快进/快退/音量/亮度） */
-    private void showOsdHint(String text) {
-        if (osdView == null) {
-            osdView = LayoutInflater.from(this).inflate(R.layout.view_osd, null);
-            // 使用已有的 seekHint 布局显示快进/快退提示
-            View seekHint = osdView.findViewById(R.id.seekHint);
-            TextView seekTime = osdView.findViewById(R.id.seekTime);
-            ImageView seekIcon = osdView.findViewById(R.id.seekIcon);
-            osdContent = seekTime;
-            osdIcon = seekIcon;
-            osdHintLayout = seekHint;
-            ((ViewGroup) findViewById(R.id.surfaceContainer)).addView(osdView);
-        }
-        if (text != null && text.startsWith("快退")) {
-            if (osdIcon != null) osdIcon.setImageResource(R.drawable.ic_fast_rewind);
-        } else if (osdIcon != null) {
-            osdIcon.setImageResource(R.drawable.ic_fast_forward);
-        }
-        osdContent.setText(text);
-        if (osdHintLayout != null) {
-            osdHintLayout.setVisibility(View.VISIBLE);
-        }
-        if (osdHideHandler == null) osdHideHandler = new Handler(Looper.getMainLooper());
+    // ================= widget 提示 =================
+
+    private void showWidgetHint(View widget, long delay) {
+        if (widget == null) return;
+        widget.setVisibility(View.VISIBLE);
         osdHideHandler.removeCallbacksAndMessages(null);
         osdHideHandler.postDelayed(() -> {
-            if (osdHintLayout != null) osdHintLayout.setVisibility(View.GONE);
-        }, 1200);
+            if (widget.getVisibility() == View.VISIBLE) widget.setVisibility(View.GONE);
+        }, delay);
     }
 
-    private void setBrightness(float b) {
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenBrightness = b;
-        getWindow().setAttributes(lp);
+    private void hideWidget(View widget) {
+        if (widget != null) widget.setVisibility(View.GONE);
     }
 
-    private void showOsdBottomRight(String text) {
-        if (osdBottomRight != null) {
-            TextView tv = osdBottomRight.findViewById(R.id.tvOsdBottomRight);
-            if (tv != null) tv.setText(text);
-            osdBottomRight.setVisibility(View.VISIBLE);
-            if (osdHideHandler == null) osdHideHandler = new Handler(Looper.getMainLooper());
-            osdHideHandler.removeCallbacksAndMessages(null);
-            osdHideHandler.postDelayed(() -> osdBottomRight.setVisibility(View.GONE), 1200);
+    private void showSeekWidget(long base, long target, boolean fromGesture) {
+        if (seekWidget == null || seekTime == null || seekIcon == null) return;
+        long delta = target - base;
+        boolean forward = delta >= 0;
+        seekIcon.setImageResource(forward ? R.drawable.ic_fast_forward : R.drawable.ic_fast_rewind);
+        seekTime.setText(formatTime(Math.abs(delta)));
+        seekWidget.setVisibility(View.VISIBLE);
+        osdHideHandler.removeCallbacksAndMessages(null);
+        if (fromGesture) {
+            osdHideHandler.postDelayed(() -> seekWidget.setVisibility(View.GONE), HIDE_WIDGET_MS);
         }
     }
 
-    private int dp2px(float dp) {
-        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
-    }
+    // ================= 全屏 / 弹幕 =================
 
-    private String formatTime(long ms) {
-        long total = ms / 1000;
-        long h = total / 3600;
-        long m = (total % 3600) / 60;
-        long s = total % 60;
-        if (h > 0) return String.format("%d:%02d:%02d", h, m, s);
-        return String.format("%02d:%02d", m, s);
-    }
-
-    private String formatSeekHint(int progress) {
-        long delta = progress - (player != null ? player.getCurrentPosition() : 0);
-        String sign = delta >= 0 ? "快进" : "快退";
-        return sign + " " + formatTime(Math.abs(delta));
-    }
-
-    /** 切换全屏模式 */
     private void toggleFullscreen() {
-        if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-            // 当前是横屏，切换到竖屏
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-        } else {
-            // 当前是竖屏，切换到横屏
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        }
+        int cur = getResources().getConfiguration().orientation;
+        setRequestedOrientation(cur == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
-    /** 切换弹幕开关（预留） */
     private void toggleDanmaku() {
         Toast.makeText(this, "弹幕功能预留", Toast.LENGTH_SHORT).show();
+    }
+
+    // ================= AbstractPlayer.Listener =================
+
+    @Override
+    public void onPrepared() {
+        loading.setVisibility(View.GONE);
+        if (resumePosition > 0) player.seekTo(resumePosition);
+        player.setSpeed(SPEEDS[speedIndex]);
+        player.start();
+        setPlayIcon(true);
+        ui.removeCallbacks(ticker);
+        ui.post(ticker);
+    }
+
+    @Override
+    public void onCompletion() {
+        setPlayIcon(false);
+        saveProgress();
+        // 自动连播下一集
+        if (seriesList != null && currentEpisodeIndex < seriesList.size() - 1) {
+            playNextEpisode();
+        }
+    }
+
+    @Override
+    public void onBuffering(boolean buffering) {
+        loading.setVisibility(buffering ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onError(String message) {
+        loading.setVisibility(View.GONE);
+        Toast.makeText(this, "播放失败：" + message + "（可点右上角切换内核重试）", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onVideoSizeChanged(int width, int height) {
+        resizeSurface(width, height);
+        adjustOrientation(width, height);
+    }
+
+    private boolean isPortraitVideo = false;
+
+    private void adjustOrientation(int width, int height) {
+        if (width <= 0 || height <= 0) return;
+        float aspectRatio = (float) width / height;
+        boolean wasPortrait = isPortraitVideo;
+        isPortraitVideo = aspectRatio < 0.8f;
+        if (wasPortrait == isPortraitVideo) return;
+        setRequestedOrientation(isPortraitVideo
+                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     private void resizeSurface(int vw, int vh) {
@@ -626,11 +672,49 @@ private boolean controlsVisible = true;
         if (pw == 0 || ph == 0) return;
         float ratio = (float) vw / vh;
         int w, h;
-        if (pw / (float) ph > ratio) { h = ph; w = (int) (ph * ratio); }
-        else { w = pw; h = (int) (pw / ratio); }
-        android.view.ViewGroup.LayoutParams lp = surfaceView.getLayoutParams();
-        lp.width = w; lp.height = h;
+        if (pw / (float) ph > ratio) {
+            h = ph;
+            w = (int) (ph * ratio);
+        } else {
+            w = pw;
+            h = (int) (pw / ratio);
+        }
+        ViewGroup.LayoutParams lp = surfaceView.getLayoutParams();
+        lp.width = w;
+        lp.height = h;
         surfaceView.setLayoutParams(lp);
+    }
+
+    // ================= 生命周期 =================
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        hideHandler.removeCallbacks(hideControlsRunnable);
+        if (player != null && player.isPlaying()) {
+            player.pause();
+            setPlayIcon(false);
+        }
+        saveProgress();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        showControls();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        hideHandler.removeCallbacks(hideControlsRunnable);
+        osdHideHandler.removeCallbacksAndMessages(null);
+        saveProgress();
+        if (parseJob != null) {
+            parseJob.stop();
+            parseJob = null;
+        }
+        releasePlayer();
     }
 
     private void saveProgress() {
@@ -652,35 +736,14 @@ private boolean controlsVisible = true;
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        hideHandler.removeCallbacks(hideControlsRunnable);
-        if (player != null && player.isPlaying()) {
-            player.pause();
-            btnPlayPause.setImageResource(R.drawable.ic_play);
-        }
-        saveProgress();
-    }
+    // ================= helpers =================
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (controlsVisible) {
-            showControls();
-        }
+    private static String formatTime(long ms) {
+        if (ms < 0) ms = 0;
+        long s = ms / 1000, m = s / 60, h = m / 60;
+        if (h > 0) return String.format(Locale.US, "%d:%02d:%02d", h, m % 60, s % 60);
+        return String.format(Locale.US, "%02d:%02d", m, s % 60);
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        hideHandler.removeCallbacks(hideControlsRunnable);
-        saveProgress();
-        if (parseJob != null) { parseJob.stop(); parseJob = null; }
-        releasePlayer();
-    }
-
-    // ===== helpers =====
 
     private static String optString(JsonObject o, String key) {
         return o.has(key) && !o.get(key).isJsonNull() ? o.get(key).getAsString() : "";
@@ -690,12 +753,14 @@ private boolean controlsVisible = true;
         Map<String, String> map = new HashMap<>();
         try {
             if (el.isJsonObject()) {
-                for (Map.Entry<String, JsonElement> e : el.getAsJsonObject().entrySet())
+                for (Map.Entry<String, JsonElement> e : el.getAsJsonObject().entrySet()) {
                     if (!e.getValue().isJsonNull()) map.put(e.getKey(), e.getValue().getAsString());
+                }
             } else if (el.isJsonPrimitive()) {
                 JsonObject o = JsonParser.parseString(el.getAsString()).getAsJsonObject();
-                for (Map.Entry<String, JsonElement> e : o.entrySet())
+                for (Map.Entry<String, JsonElement> e : o.entrySet()) {
                     if (!e.getValue().isJsonNull()) map.put(e.getKey(), e.getValue().getAsString());
+                }
             }
         } catch (Throwable ignored) {
         }
