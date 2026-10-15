@@ -677,14 +677,6 @@ private boolean controlsVisible = true;
         }
         saveProgress();
     }
-        super.onPause();
-        hideHandler.removeCallbacks(hideControlsRunnable);
-        if (player != null && player.isPlaying()) {
-            player.pause();
-            btnPlayPause.setImageResource(R.drawable.ic_play);
-        }
-        saveProgress();
-    }
 
     @Override
     protected void onResume() {
