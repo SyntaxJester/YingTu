@@ -1,7 +1,6 @@
 package com.yingtu.plus.ui.activity;
 
 import android.content.pm.ActivityInfo;
-import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,8 +9,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.view.WindowManager.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -29,6 +26,8 @@ import com.yingtu.plus.bean.VodInfo;
 import com.yingtu.plus.player.ParseJob;
 import com.yingtu.plus.player.core.AbstractPlayer;
 import com.yingtu.plus.player.core.PlayerFactory;
+import com.yingtu.plus.player.ui.PlayerGestureController;
+import com.yingtu.plus.player.ui.PlayerOsdController;
 import com.yingtu.plus.util.HistoryHelper;
 import com.yingtu.plus.util.OkGo;
 import com.yingtu.plus.util.Sniffer;
@@ -103,9 +102,10 @@ private boolean controlsVisible = true;
     private View osdHintLayout;
     private LinearLayout osdTopLeft, osdTopRight, osdBottomLeft, osdBottomRight;
     private Handler osdHideHandler;
-    private AudioManager audioManager;
-    private float gestureStartY = 0;
-    private boolean isBrightnessGesture = false;
+    
+    // 从 webhtv 移植的手势 + OSD 控制器
+    private PlayerGestureController gestureController;
+    private PlayerOsdController osdController;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable ticker = new Runnable() {
@@ -148,6 +148,21 @@ private boolean controlsVisible = true;
         osdTopRight = find(R.id.osdTopRight);
         osdBottomLeft = find(R.id.osdBottomLeft);
         osdBottomRight = find(R.id.osdBottomRight);
+        TextView tvTopLeft = osdTopLeft.findViewById(R.id.tvOsdTopLeft);
+        TextView tvTopRight = osdTopRight.findViewById(R.id.tvOsdTopRight);
+        TextView tvBottomLeft = osdBottomLeft.findViewById(R.id.tvOsdBottomLeft);
+        TextView tvBottomRight = osdBottomRight.findViewById(R.id.tvOsdBottomRight);
+
+        // 初始化 OSD 控制器（从 webhtv PlayerOsdController 移植）
+        osdController = new PlayerOsdController(
+                osdTopLeft, tvTopLeft,
+                osdTopRight, tvTopRight,
+                osdBottomLeft, tvBottomLeft,
+                osdBottomRight, tvBottomRight,
+                new PlayerOsdController.Source() {
+                    @Override public AbstractPlayer getPlayer() { return player; }
+                    @Override public String getTitle() { return vodName != null ? vodName : ""; }
+                });
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
@@ -178,44 +193,46 @@ private boolean controlsVisible = true;
         // 点击屏幕任意位置显示/隐藏控制层
         findViewById(R.id.surfaceContainer).setOnClickListener(v -> toggleControls());
         
-        // 手势：左半屏上下滑调亮度，右半屏上下滑调音量
-        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int screenHeight = wm.getDefaultDisplay().getHeight();
-        findViewById(R.id.surfaceContainer).setOnTouchListener((v, event) -> {
-            int action = event.getActionMasked();
-            if (action == android.view.MotionEvent.ACTION_DOWN) {
-                showControls();
-                gestureStartY = event.getRawY();
-                float x = event.getRawX();
-                isBrightnessGesture = x < screenHeight * 0.5f ? false : true; // 左屏音量，右屏亮度
-                return true;
-            }
-            if (action == android.view.MotionEvent.ACTION_MOVE && !dragging) {
-                float deltaY = gestureStartY - event.getRawY();
-                if (Math.abs(deltaY) < 5) return true;
-                if (isBrightnessGesture) {
-                    float cur = getWindow().getAttributes().screenBrightness;
-                    if (cur < 0) cur = 0.5f;
-                    float newB = Math.max(0.01f, Math.min(1.0f, cur + deltaY / screenHeight));
-                    setBrightness(newB);
-                    String hint = "亮度 " + (int) (newB * 100) + "%";
-                    showOsdBottomRight(hint);
-                    gestureStartY = event.getRawY();
-                } else {
-                    int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                    int deltaVol = (int) (deltaY / screenHeight * maxVolume);
-                    int newVol = Math.max(0, Math.min(maxVolume, curVol + deltaVol));
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0);
-                    String hint = "音量 " + newVol + "/" + maxVolume;
-                    showOsdBottomRight(hint);
-                    gestureStartY = event.getRawY();
+        // 从 webhtv 移植的手势控制器：双击暂停、长按倍速、侧滑亮度/音量、快进快退、双指缩放
+        gestureController = PlayerGestureController.create(this, surfaceView, new PlayerGestureController.Listener() {
+            @Override public void onSeeking(long deltaMs) {
+                if (player != null) {
+                    long pos = player.getCurrentPosition() + deltaMs;
+                    long dur = player.getDuration();
+                    if (pos < 0) pos = 0;
+                    if (dur > 0 && pos > dur) pos = dur;
+                    player.seekTo(pos);
+                    showOsdBottomRight("快进/快退 " + formatTime(pos));
                 }
-                return true;
             }
-            return false;
+            @Override public void onSeekEnd(long deltaMs) {}
+            @Override public void onSpeedUp() {
+                if (player != null) {
+                    player.setSpeed(2.0f);
+                    showOsdBottomRight("2.0x");
+                }
+            }
+            @Override public void onSpeedEnd() {
+                if (player != null) player.setSpeed(1.0f);
+            }
+            @Override public void onBrightness(int percent) {
+                showOsdBottomRight("亮度 " + percent + "%");
+            }
+            @Override public void onVolume(int percent) {
+                showOsdBottomRight("音量 " + percent + "%");
+            }
+            @Override public void onFlingUp() {}
+            @Override public void onFlingDown() {}
+            @Override public void onSingleTap() {
+                toggleControls();
+            }
+            @Override public void onDoubleTap() {
+                togglePlay();
+            }
+            @Override public void onScale(double scale) {}
+            @Override public void onTouchEnd() {}
         });
+        findViewById(R.id.surfaceContainer).setOnTouchListener((v, event) -> gestureController.onTouchEvent(event));
 
         // 进度条拖动时显示快进/快退 OSD 提示
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -433,6 +450,12 @@ private boolean controlsVisible = true;
         btnPlayPause.setImageResource(R.drawable.ic_pause);
         ui.removeCallbacks(ticker);
         ui.post(ticker);
+        
+        // 启动 OSD 控制器（webhtv 架构）
+        if (osdController != null) {
+            osdController.start();
+            osdController.setControlsVisible(controlsVisible);
+        }
     }
 
     @Override public void onCompletion() {
@@ -567,20 +590,9 @@ private boolean controlsVisible = true;
         }, 1200);
     }
 
-    private void setBrightness(float b) {
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenBrightness = b;
-        getWindow().setAttributes(lp);
-    }
-
     private void showOsdBottomRight(String text) {
-        if (osdBottomRight != null) {
-            TextView tv = osdBottomRight.findViewById(R.id.tvOsdBottomRight);
-            if (tv != null) tv.setText(text);
-            osdBottomRight.setVisibility(View.VISIBLE);
-            if (osdHideHandler == null) osdHideHandler = new Handler(Looper.getMainLooper());
-            osdHideHandler.removeCallbacksAndMessages(null);
-            osdHideHandler.postDelayed(() -> osdBottomRight.setVisibility(View.GONE), 1200);
+        if (osdController != null) {
+            osdController.showBottomRight(text);
         }
     }
 
@@ -646,6 +658,9 @@ private boolean controlsVisible = true;
 
     private void releasePlayer() {
         ui.removeCallbacks(ticker);
+        if (osdController != null) {
+            osdController.stop();
+        }
         if (player != null) {
             player.release();
             player = null;
@@ -654,6 +669,14 @@ private boolean controlsVisible = true;
 
     @Override
     protected void onPause() {
+        super.onPause();
+        hideHandler.removeCallbacks(hideControlsRunnable);
+        if (player != null && player.isPlaying()) {
+            player.pause();
+            btnPlayPause.setImageResource(R.drawable.ic_play);
+        }
+        saveProgress();
+    }
         super.onPause();
         hideHandler.removeCallbacks(hideControlsRunnable);
         if (player != null && player.isPlaying()) {
