@@ -108,7 +108,7 @@ public class PlayerGestureController extends GestureDetector.SimpleOnGestureList
     }
 
     private boolean isSide(MotionEvent e) {
-        int four = UiUtil.getScreenWidth(App.get()) / 4;
+        int four = UiUtil.getScreenWidth(com.yingtu.plus.base.App.context()) / 4;
         float x = e.getRawX();
         return x <= four || x >= four * 3;
     }
