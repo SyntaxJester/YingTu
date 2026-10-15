@@ -93,6 +93,11 @@ public class PlayActivity extends BaseActivity
     private Handler osdHideHandler;
     private String toastOsd;
 
+    // 四角 OSD 信息面板（webhtv 风格）
+    private View osdTopLeft, osdTopRight, osdBottomLeft, osdBottomRight;
+    private TextView tvOsdTitle, tvOsdDecoder, tvOsdSpeed, tvOsdCore;
+    private TextView tvOsdSeries, tvOsdTime, tvOsdTotal;
+
     // 手势
     private PlayerGestureController gesture;
     private long seekBasePosition;
@@ -164,6 +169,19 @@ public class PlayActivity extends BaseActivity
         volumeIcon = find(R.id.volumeIcon);
         brightProgress = find(R.id.brightProgress);
         volumeProgress = find(R.id.volumeProgress);
+
+        // ===== 四角 OSD 信息面板（webhtv 风格）=====
+        osdTopLeft = find(R.id.osdTopLeft);
+        osdTopRight = find(R.id.osdTopRight);
+        osdBottomLeft = find(R.id.osdBottomLeft);
+        osdBottomRight = find(R.id.osdBottomRight);
+        tvOsdTitle = find(R.id.tvOsdTitle);
+        tvOsdDecoder = find(R.id.tvOsdDecoder);
+        tvOsdSpeed = find(R.id.tvOsdSpeed);
+        tvOsdCore = find(R.id.tvOsdCore);
+        tvOsdSeries = find(R.id.tvOsdSeries);
+        tvOsdTime = find(R.id.tvOsdTime);
+        tvOsdTotal = find(R.id.tvOsdTotal);
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
@@ -417,7 +435,26 @@ public class PlayActivity extends BaseActivity
             seekBar.setProgress((int) pos);
             tvPosition.setText(formatTime(pos));
             tvDuration.setText(formatTime(dur));
+            refreshOsd(pos, dur);
         }
+    }
+
+    /**
+     * 刷新四角 OSD 内容（webhtv 风格）
+     * 左上：片名 + 解码信息；右上：倍速 + 内核；左下：集数；右下：时间/总时长
+     */
+    private void refreshOsd(long pos, long dur) {
+        if (tvOsdTitle != null) tvOsdTitle.setText(vodName == null ? "" : vodName);
+        if (tvOsdDecoder != null) tvOsdDecoder.setText("硬解 · " + PlayerFactory.coreName(PlayerFactory.currentCore()));
+        if (tvOsdSpeed != null) tvOsdSpeed.setText(String.format(Locale.getDefault(), "%.2fx", SPEEDS[speedIndex]));
+        if (tvOsdCore != null) tvOsdCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
+        if (tvOsdSeries != null && seriesList != null && !seriesList.isEmpty()) {
+            VodInfo.VodSeries s = seriesList.get(Math.min(currentEpisodeIndex, seriesList.size() - 1));
+            tvOsdSeries.setText(String.format(Locale.getDefault(), "%s (%d/%d)",
+                    s.name, currentEpisodeIndex + 1, seriesList.size()));
+        }
+        if (tvOsdTime != null) tvOsdTime.setText(formatTime(pos));
+        if (tvOsdTotal != null) tvOsdTotal.setText(formatTime(dur));
     }
 
     // ================= 手势反馈（PlayerGestureController.Listener）=================
@@ -556,6 +593,10 @@ public class PlayActivity extends BaseActivity
         topControlBar.setVisibility(View.VISIBLE);
         controlBar.setVisibility(View.VISIBLE);
         centerControls.setVisibility(View.VISIBLE);
+        osdTopLeft.setVisibility(View.VISIBLE);
+        osdTopRight.setVisibility(View.VISIBLE);
+        osdBottomLeft.setVisibility(View.VISIBLE);
+        osdBottomRight.setVisibility(View.VISIBLE);
         hideHandler.removeCallbacks(hideControlsRunnable);
         hideControlsRunnable = () -> {
             if (controlsVisible) hideControls();
@@ -569,6 +610,10 @@ public class PlayActivity extends BaseActivity
         topControlBar.setVisibility(View.GONE);
         controlBar.setVisibility(View.GONE);
         centerControls.setVisibility(View.GONE);
+        osdTopLeft.setVisibility(View.GONE);
+        osdTopRight.setVisibility(View.GONE);
+        osdBottomLeft.setVisibility(View.GONE);
+        osdBottomRight.setVisibility(View.GONE);
     }
 
     // ================= widget 提示 =================
