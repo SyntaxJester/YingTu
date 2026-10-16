@@ -128,4 +128,4 @@ public class Catchup {
         if (tag.startsWith("(e") && paren >= 0) return formatTime(end, tag.substring(paren + 1));
         if (tag.startsWith("utcend:")) return String.valueOf(end / 1000);
         if (tag.startsWith("utc:")) return String.valueOf(start / 1000);
-        return "";)
+        return "";
