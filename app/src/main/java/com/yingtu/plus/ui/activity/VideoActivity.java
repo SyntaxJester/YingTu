@@ -183,17 +183,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-    // 页面参数常量
-    public static final String KEY_TITLE = "title";
-    public static final String KEY_URL = "url";
-    public static final String KEY_SOURCE = "sourceKey";
-    public static final String KEY_VOD_ID = "vodId";
-    public static final String KEY_VOD_NAME = "vodName";
-    public static final String KEY_VOD_PIC = "vodPic";
-    public static final String KEY_FLAG = "playFlag";
-    public static final String KEY_FLAG_NAME = "playFlagName";
-    public static final String KEY_INDEX = "playIndex";
-    public static final String KEY_EPISODE = "episodeName";
 
 public class VideoActivity extends PlaybackActivity implements Clock.Callback, CustomKeyDown.Listener, TrackDialog.Listener, ControlDialog.Listener, DanmakuDialog.Host, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, EpisodeGroupAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, ParseAdapter.OnClickListener, CastDialog.Listener, InfoDialog.Listener {
 
@@ -206,6 +195,17 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private static final long KARAOKE_DELAY_STEP_MS = 100L;
     private static final int LYRICS_TAB_LYRICS = 0;
     private static final int LYRICS_TAB_KARAOKE = 1;
+    // 页面参数常量
+    public static final String KEY_TITLE = "title";
+    public static final String KEY_URL = "url";
+    public static final String KEY_SOURCE = "sourceKey";
+    public static final String KEY_VOD_ID = "vodId";
+    public static final String KEY_VOD_NAME = "vodName";
+    public static final String KEY_VOD_PIC = "vodPic";
+    public static final String KEY_FLAG = "playFlag";
+    public static final String KEY_FLAG_NAME = "playFlagName";
+    public static final String KEY_INDEX = "playIndex";
+    public static final String KEY_EPISODE = "episodeName";
     private static final int LYRICS_TAB_TRACK = 2;
     private static final int AUDIO_QUEUE_TAB_CURRENT = 0;
     private static final int AUDIO_QUEUE_TAB_SEARCH = 1;
