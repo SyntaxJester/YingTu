@@ -182,11 +182,8 @@ public class PlayActivity extends BaseActivity
         tvOsdSeries = find(R.id.tvOsdSeries);
         tvOsdTime = find(R.id.tvOsdTime);
         tvOsdTotal = find(R.id.tvOsdTotal);
-        // 四角 OSD 常驻显示（webhtv 风格）
-        osdTopLeft.setVisibility(View.VISIBLE);
-        osdTopRight.setVisibility(View.VISIBLE);
-        osdBottomLeft.setVisibility(View.VISIBLE);
-        osdBottomRight.setVisibility(View.VISIBLE);
+        // 立即填充四角 OSD 内容（不依赖 player 就绪）
+        fillOsdNow();
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
@@ -444,6 +441,25 @@ public class PlayActivity extends BaseActivity
         }
     }
 
+    /** 立即填充四角 OSD（不依赖 player/duration，init 即可用）。 */
+    private void fillOsdNow() {
+        if (tvOsdTitle != null && vodName != null) tvOsdTitle.setText(vodName);
+        if (tvOsdDecoder != null) tvOsdDecoder.setText("硬解 · " + PlayerFactory.coreName(PlayerFactory.currentCore()));
+        if (tvOsdSpeed != null) tvOsdSpeed.setText(String.format(Locale.getDefault(), "%.2fx", SPEEDS[speedIndex]));
+        if (tvOsdCore != null) tvOsdCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
+        if (tvOsdSeries != null && seriesList != null && !seriesList.isEmpty()) {
+            VodInfo.VodSeries s = seriesList.get(Math.min(currentEpisodeIndex, seriesList.size() - 1));
+            tvOsdSeries.setText(String.format(Locale.getDefault(), "%s (%d/%d)",
+                    s.name, currentEpisodeIndex + 1, seriesList.size()));
+        }
+        if (tvOsdTime != null) tvOsdTime.setText("00:00");
+        if (tvOsdTotal != null) tvOsdTotal.setText("--:--");
+        if (osdTopLeft != null) osdTopLeft.setVisibility(View.VISIBLE);
+        if (osdTopRight != null) osdTopRight.setVisibility(View.VISIBLE);
+        if (osdBottomLeft != null) osdBottomLeft.setVisibility(View.VISIBLE);
+        if (osdBottomRight != null) osdBottomRight.setVisibility(View.VISIBLE);
+    }
+
     /**
      * 刷新四角 OSD 内容（webhtv 风格）
      * 左上：片名 + 解码信息；右上：倍速 + 内核；左下：集数；右下：时间/总时长
@@ -459,7 +475,12 @@ public class PlayActivity extends BaseActivity
                     s.name, currentEpisodeIndex + 1, seriesList.size()));
         }
         if (tvOsdTime != null) tvOsdTime.setText(formatTime(pos));
-        if (tvOsdTotal != null) tvOsdTotal.setText(formatTime(dur));
+        if (tvOsdTotal != null) tvOsdTotal.setText(dur > 0 ? formatTime(dur) : "--:--");
+        // 确保四个面板可见（不受控制栏显隐影响）
+        if (osdTopLeft != null) osdTopLeft.setVisibility(View.VISIBLE);
+        if (osdTopRight != null) osdTopRight.setVisibility(View.VISIBLE);
+        if (osdBottomLeft != null) osdBottomLeft.setVisibility(View.VISIBLE);
+        if (osdBottomRight != null) osdBottomRight.setVisibility(View.VISIBLE);
     }
 
     // ================= 手势反馈（PlayerGestureController.Listener）=================

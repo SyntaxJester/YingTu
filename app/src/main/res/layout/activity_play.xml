@@ -36,12 +36,8 @@
             android:layout_gravity="top|start"
             android:layout_marginStart="12dp"
             android:layout_marginTop="56dp"
-            android:background="#B3000000"
+            android:background="@drawable/bg_osd_panel"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
             android:visibility="gone">
 
             <TextView
@@ -72,13 +68,9 @@
             android:layout_gravity="top|end"
             android:layout_marginEnd="12dp"
             android:layout_marginTop="56dp"
-            android:background="#B3000000"
+            android:background="@drawable/bg_osd_panel"
             android:gravity="end"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
             android:visibility="gone">
 
             <TextView
@@ -106,12 +98,8 @@
             android:layout_gravity="bottom|start"
             android:layout_marginStart="12dp"
             android:layout_marginBottom="56dp"
-            android:background="#B3000000"
+            android:background="@drawable/bg_osd_panel"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
             android:visibility="gone">
 
             <TextView
@@ -133,13 +121,9 @@
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="12dp"
             android:layout_marginBottom="56dp"
-            android:background="#B3000000"
+            android:background="@drawable/bg_osd_panel"
             android:gravity="end"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
             android:visibility="gone">
 
             <TextView
