@@ -50,18 +50,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
-    // 页面参数常量
-    public static final String KEY_TITLE = "title";
-    public static final String KEY_URL = "url";
-    public static final String KEY_SOURCE = "sourceKey";
-    public static final String KEY_VOD_ID = "vodId";
-    public static final String KEY_VOD_NAME = "vodName";
-    public static final String KEY_VOD_PIC = "vodPic";
-    public static final String KEY_FLAG = "playFlag";
-    public static final String KEY_FLAG_NAME = "playFlagName";
-    public static final String KEY_INDEX = "playIndex";
-    public static final String KEY_EPISODE = "episodeName";
-    public static final String KEY_POSITION = "position";
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -194,6 +182,18 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+    // 页面参数常量
+    public static final String KEY_TITLE = "title";
+    public static final String KEY_URL = "url";
+    public static final String KEY_SOURCE = "sourceKey";
+    public static final String KEY_VOD_ID = "vodId";
+    public static final String KEY_VOD_NAME = "vodName";
+    public static final String KEY_VOD_PIC = "vodPic";
+    public static final String KEY_FLAG = "playFlag";
+    public static final String KEY_FLAG_NAME = "playFlagName";
+    public static final String KEY_INDEX = "playIndex";
+    public static final String KEY_EPISODE = "episodeName";
 
 public class VideoActivity extends PlaybackActivity implements Clock.Callback, CustomKeyDown.Listener, TrackDialog.Listener, ControlDialog.Listener, DanmakuDialog.Host, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, EpisodeGroupAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, ParseAdapter.OnClickListener, CastDialog.Listener, InfoDialog.Listener {
 
