@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="24dp">
+
+        <!-- 顶部返回 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/ivBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="9dp"
+                android:src="@drawable/ic_back"
+                app:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="@string/title_setting"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- ========== 数据接口 ========== -->
+        <LinearLayout style="@style/SettingSectionHeader">
+            <TextView style="@style/SettingSectionTitle" android:text="@string/sec_data" />
+            <TextView android:id="@+id/btnApiSetting" style="@style/SettingHeaderBtn" android:text="@string/act_api_setting" />
+            <TextView android:id="@+id/btnApiAdvanced" style="@style/SettingHeaderBtn" android:text="@string/act_api_advanced" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingCard">
+            <LinearLayout android:id="@+id/rowApiUrl" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_api_url" />
+                <TextView android:id="@+id/tvApiUrl" style="@style/SettingValue" android:text="@string/val_not_set" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowInject" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_inject" />
+                <TextView android:id="@+id/tvInject" style="@style/SettingValue" android:text="@string/val_off" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowApiCache" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_api_cache" />
+                <TextView android:id="@+id/tvApiCache" style="@style/SettingValue" android:text="@string/val_off" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 首页和搜索 ========== -->
+        <LinearLayout style="@style/SettingSectionHeader">
+            <TextView style="@style/SettingSectionTitle" android:text="@string/sec_home" />
+            <TextView android:id="@+id/btnSourcePin" style="@style/SettingHeaderBtn" android:text="@string/act_source_pin" />
+            <TextView android:id="@+id/btnSourceDisable" style="@style/SettingHeaderBtn" android:text="@string/act_source_disable" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingCard">
+            <LinearLayout android:id="@+id/rowStartSource" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_start_source" />
+                <TextView android:id="@+id/tvStartSource" style="@style/SettingValue" android:text="@string/val_off" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowHomeRec" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_home_rec" />
+                <TextView android:id="@+id/tvHomeRec" style="@style/SettingValue" android:text="@string/val_douban" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowSearchShow" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_search_show" />
+                <TextView android:id="@+id/tvSearchShow" style="@style/SettingValue" android:text="@string/val_pic_text" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 播放设置 ========== -->
+        <LinearLayout style="@style/SettingSectionHeader">
+            <TextView style="@style/SettingSectionTitle" android:text="@string/sec_play" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingCard">
+            <LinearLayout android:id="@+id/rowDetailStyle" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_detail_style" />
+                <TextView android:id="@+id/tvDetailStyle" style="@style/SettingValue" android:text="@string/val_detail_style" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowProgressTag" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_progress_tag" />
+                <TextView android:id="@+id/tvProgressTag" style="@style/SettingValue" android:text="@string/val_name" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowPlayer" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_player" />
+                <TextView android:id="@+id/tvPlayer" style="@style/SettingValue" android:text="@string/val_exo" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowRender" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_render" />
+                <TextView android:id="@+id/tvRender" style="@style/SettingValue" android:text="@string/val_texture" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowScale" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_scale" />
+                <TextView android:id="@+id/tvScale" style="@style/SettingValue" android:text="@string/val_fit" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowParse" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/setting_default_parse" />
+                <TextView android:id="@+id/tvParseName" style="@style/SettingValue" android:text="@string/parse_none" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowSkipAd" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_skip_ad" />
+                <TextView android:id="@+id/tvSkipAd" style="@style/SettingValue" android:text="@string/val_on" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowAutoFloat" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_auto_float" />
+                <TextView android:id="@+id/tvAutoFloat" style="@style/SettingValue" android:text="@string/val_off" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 系统设置 ========== -->
+        <LinearLayout style="@style/SettingSectionHeader">
+            <TextView style="@style/SettingSectionTitle" android:text="@string/sec_system" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingCard">
+            <LinearLayout android:id="@+id/rowOrientation" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_orientation" />
+                <TextView android:id="@+id/tvOrientation" style="@style/SettingValue" android:text="@string/val_portrait" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowDarkMode" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/setting_dark_mode" />
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/swDark"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowStartPage" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_start_page" />
+                <TextView android:id="@+id/tvStartPage" style="@style/SettingValue" android:text="@string/val_home" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowGridColumns" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_grid_columns" />
+                <TextView android:id="@+id/tvGridColumns" style="@style/SettingValue" android:text="@string/val_columns3" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowClearCache" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="@string/row_auto_clear" />
+                <TextView android:id="@+id/tvCacheHint" style="@style/SettingValue" android:text="@string/val_on" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+
+            <View style="@style/SettingSep" />
+
+            <LinearLayout android:id="@+id/rowWallpaper" style="@style/SettingRow">
+                <TextView style="@style/SettingLabel" android:text="壁纸" />
+                <TextView android:id="@+id/tvWallpaper" style="@style/SettingValue" android:text="默认" />
+                <ImageView style="@style/SettingArrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 底部按钮 ========== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <TextView
+                android:id="@+id/btnBackup"
+                style="@style/SettingBottomBtn"
+                android:layout_marginEnd="5dp"
+                android:text="@string/act_backup" />
+
+            <TextView
+                android:id="@+id/btnClearCache"
+                style="@style/SettingBottomBtn"
+                android:layout_marginStart="5dp"
+                android:text="@string/act_clear_cache" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <TextView
+                android:id="@+id/btnUpdate"
+                style="@style/SettingBottomBtn"
+                android:layout_marginEnd="5dp"
+                android:text="@string/act_update" />
+
+            <TextView
+                android:id="@+id/btnAbout"
+                style="@style/SettingBottomBtn"
+                android:layout_marginStart="5dp"
+                android:text="@string/act_about" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

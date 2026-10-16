@@ -1,0 +1,84 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.yingtu.plus'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.yingtu.plus"
+        minSdk 24
+        targetSdk 28
+        versionCode 29
+        versionName "1.9.20"
+        vectorDrawables.useSupportLibrary = true
+        ndk {
+            // 只保留 ARM ABI：IJK/MPV 的 x86 .so 体积大且真机基本用不到
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/*.kotlin_module', 'META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST']
+        }
+    }
+}
+
+dependencies {
+    // CatVod spider runtime (csp_ JAR 加载 + 代理) 与 QuickJS JS Spider 运行时
+    implementation project(':catvod')
+    implementation project(':quickjs')
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.4'
+
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.gridlayout:gridlayout:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.viewpager2:viewpager2:1.0.0'
+    implementation 'androidx.fragment:fragment:1.6.2'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.7.0'
+
+    // Media3 ExoPlayer for video playback
+    implementation 'androidx.media3:media3-exoplayer:1.2.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
+    implementation 'androidx.media3:media3-datasource:1.2.1'
+    implementation 'androidx.media3:media3-ui:1.2.1'
+
+    // IJKPlayer 内核（DKPlayer/doikki 预编译，自带 arm64/v7a .so）
+    implementation 'xyz.doikki.android.dkplayer:player-ijk:3.3.7'
+    // MPV 内核（Findroid 预编译 libmpv，自带 arm64/v7a/x86 .so）
+    implementation 'dev.jdtech.mpv:libmpv:0.3.1'
+
+    // Networking + JSON
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Image loading
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+
+    // Simple key-value store
+    implementation 'com.orhanobut:hawk:2.0.1'
+}

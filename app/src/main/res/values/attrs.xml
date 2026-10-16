@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <declare-styleable name="CustomAttrs">
+        <attr name="exampleString" format="string" />
+        <attr name="exampleDimension" format="dimension" />
+        <attr name="exampleColor" format="color" />
+        <attr name="exampleDrawable" format="reference|color" />
+        <attr name="exampleBoolean" format="boolean" />
+        <attr name="exampleInt" format="integer" />
+        <attr name="exampleFloat" format="float" />
+        <attr name="exampleFraction" format="fraction" />
+    </declare-styleable>
+</resources>

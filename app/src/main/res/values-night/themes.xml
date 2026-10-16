@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Base.AppTheme">
+        <!-- night 模式由 Android 系统自动切换，无需额外配置 -->
+    </style>
+</resources>

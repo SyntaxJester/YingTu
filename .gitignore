@@ -1,0 +1,25 @@
+# Build output
+build/
+.gradle/
+app/build/
+
+# Local config
+local.properties
+*.keystore
+keystore.properties
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+app/src/main/res/values/dimens.xml  # if generated
+*.log

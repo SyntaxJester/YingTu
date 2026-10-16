@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 壁纸预览 -->
+    <FrameLayout
+        android:id="@+id/fmWallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_margin="14dp">
+
+        <ImageView
+            android:id="@+id/ivWallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@drawable/bg_main_gradient" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="12dp"
+            android:background="#66000000"
+            android:padding="6dp"
+            android:text="当前壁纸"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
+    </FrameLayout>
+
+    <!-- 底部按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="14dp"
+        android:weightSum="2">
+
+        <Button
+            android:id="@+id/btnPickWallpaper"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/colorPrimary"
+            android:padding="8dp"
+            android:text="选择壁纸"
+            android:textAllCaps="false"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnResetWallpaper"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:text="恢复默认"
+            android:textAllCaps="false"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+</LinearLayout>

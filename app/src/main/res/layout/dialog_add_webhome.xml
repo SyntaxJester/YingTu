@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="22dp"
+    android:paddingEnd="22dp"
+    android:paddingTop="12dp">
+
+    <RadioGroup
+        android:id="@+id/rgType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbUrl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="网址"
+            android:textColor="@color/text_primary" />
+
+        <RadioButton
+            android:id="@+id/rbLocal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="本地 HTML"
+            android:textColor="@color/text_primary" />
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:hint="名称（可选）"
+        android:singleLine="true"
+        android:textColorHint="@color/text_hint" />
+
+    <LinearLayout
+        android:id="@+id/rowUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/etUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="网页地址 http(s)://..."
+            android:inputType="textUri"
+            android:singleLine="true"
+            android:textColorHint="@color/text_hint" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/btnPickFile"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_frost_button"
+        android:gravity="center"
+        android:text="选择设备上的 .html 文件"
+        android:textColor="@color/colorPrimary"
+        android:textSize="14sp"
+        android:visibility="gone" />
+</LinearLayout>

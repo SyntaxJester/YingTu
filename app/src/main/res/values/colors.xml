@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 品牌 / 强调色（青蓝） -->
+    <color name="colorPrimary">#2BC4D8</color>
+    <color name="colorPrimaryVariant">#1FA7BC</color>
+    <color name="colorOnPrimary">#06202A</color>
+
+    <!-- 海洋渐变背景（窗口底图） -->
+    <color name="gradient_top">#3AA6CC</color>
+    <color name="gradient_mid">#227FA6</color>
+    <color name="gradient_bottom">#145E7E</color>
+
+    <!-- 页面兜底背景（渐变不可用时） -->
+    <color name="bg_page">#17678A</color>
+    <!-- 磨砂卡片（半透明深青） -->
+    <color name="card_bg">#3313384A</color>
+    <color name="card_bg_strong">#59102A3C</color>
+    <color name="bg_sidebar">#2E0C2A3C</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#C4DEE9</color>
+    <color name="text_hint">#8FB4C4</color>
+    <!-- 设置项右侧取值（青色） -->
+    <color name="value_teal">#5FE4EB</color>
+
+    <!-- 分割线 -->
+    <color name="divider">#33FFFFFF</color>
+
+    <!-- 组件 -->
+    <color name="chip_bg">#33FFFFFF</color>
+    <color name="chip_text">#E4F3F8</color>
+
+    <!-- 分类标签 -->
+    <color name="sort_tab_text">#D2E7EF</color>
+    <color name="sort_tab_selected">#2BC4D8</color>
+
+    <!-- 备注 / 角标 -->
+    <color name="note_bg">#B3000000</color>
+    <!-- 豆瓣热播角标底色 -->
+    <color name="badge_bg">#CC19B2C6</color>
+</resources>

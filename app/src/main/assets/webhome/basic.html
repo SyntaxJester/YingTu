@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>影图+ WebHome</title>
+  <script>
+    // ===== 兼容引导层：仅用 ES5，确保在旧 WebView 内核(Chromium 50+)也能先跑起来 =====
+    (function () {
+      if (!Array.prototype.forEach) {
+        Array.prototype.forEach = function (fn, thisArg) {
+          for (var i = 0; i < this.length; i += 1) if (i in this) fn.call(thisArg, this[i], i, this);
+        };
+      }
+      if (!Element.prototype.closest) {
+        Element.prototype.closest = function (selector) {
+          var node = this;
+          while (node && node.nodeType === 1) {
+            if (node.matches && node.matches(selector)) return node;
+            node = node.parentElement;
+          }
+          return null;
+        };
+      }
+      if (!Element.prototype.replaceChildren) {
+        Element.prototype.replaceChildren = function () {
+          while (this.firstChild) this.removeChild(this.firstChild);
+          for (var i = 0; i < arguments.length; i += 1) this.appendChild(arguments[i]);
+        };
+      }
+      var cls = " webhome-ready";
+      if (!("gap" in document.documentElement.style)) cls += " no-layout-gap";
+      if (!window.CSS || !CSS.supports || !CSS.supports("top", "calc(1px + 1px)")) cls += " no-css-functions";
+      document.documentElement.className += cls;
+    })();
+  </script>
+  <style>
+    :root {
+      --fm-web-height: 100vh;
+      --fm-safe-top: 0px;
+      --fm-safe-bottom: 0px;
+      --accent: #2BC4D8;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      min-height: var(--fm-web-height, 100vh);
+      margin: 0;
+      color: #f1fbff;
+      font: 15px/1.6 system-ui, -apple-system, "PingFang SC", "Microsoft Yahei", sans-serif;
+      background: transparent;
+    }
+    /* 电脑预览时给个海洋底色；App 内 WebView 透明，露出原生渐变壁纸 */
+    html:not(.fm-native) body {
+      background: linear-gradient(160deg, #3AA6CC, #145E7E);
+    }
+    .app {
+      min-height: var(--fm-web-height, 100vh);
+      padding: 16px;
+      padding-top: calc(16px + var(--fm-safe-top));
+      padding-bottom: calc(20px + var(--fm-safe-bottom));
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .logo {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, #2BC4D8, #1FA7BC);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #06202A; font-size: 20px;
+    }
+    h1 { margin: 0; font-size: 20px; font-weight: 700; }
+    .sub { margin: 2px 0 16px; color: #bfe3ee; font-size: 12px; }
+    .grid {
+      display: flex; flex-wrap: wrap; margin: 0 -6px;
+    }
+    .card { width: 50%; padding: 6px; }
+    @media (min-width: 640px) { .card { width: 25%; } }
+    .card button {
+      width: 100%; min-height: 76px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.10);
+      color: inherit; font-size: 14px; font-weight: 600;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    }
+    .card button:active { background: rgba(43,196,216,0.28); }
+    .ico { font-size: 22px; }
+    .search {
+      display: flex; gap: 8px; margin: 4px 0 16px;
+    }
+    .search input {
+      flex: 1; min-width: 0; padding: 11px 14px;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08); color: #fff; font-size: 14px;
+    }
+    .search button {
+      padding: 0 18px; border: 0; border-radius: 10px; cursor: pointer;
+      background: var(--accent); color: #06202A; font-weight: 700;
+    }
+    .sec { margin: 20px 0 8px; font-size: 13px; color: #cdeaf2; font-weight: 700; }
+    .hist { display: flex; flex-direction: column; gap: 8px; }
+    .hist .row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+    }
+    .hist .pic {
+      width: 42px; height: 56px; border-radius: 6px; object-fit: cover;
+      background: rgba(0,0,0,0.3); flex: none;
+    }
+    .hist .meta { flex: 1; min-width: 0; }
+    .hist .name { font-size: 14px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist .note { font-size: 12px; color: #a9d2df; margin: 3px 0 0; }
+    .empty { color: #a9d2df; font-size: 13px; padding: 6px 2px; }
+    .foot { margin-top: 26px; text-align: center; color: #86b9c8; font-size: 11px; line-height: 1.8; }
+    .badge {
+      display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 8px;
+      font-size: 10px; background: rgba(43,196,216,0.25); color: #cff6fb; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="head">
+      <div class="logo">Y</div>
+      <div>
+        <h1>影图+ 网页首页<span class="badge" id="envBadge">预览</span></h1>
+      </div>
+    </div>
+    <p class="sub">WebHome · 用 HTML/CSS/JS 定制首页，调用 App 原生能力</p>
+
+    <div class="search">
+      <input id="kw" type="text" placeholder="搜索影片（调用 fm.search）" />
+      <button type="button" data-action="search">搜索</button>
+    </div>
+
+    <section class="grid" id="grid"></section>
+
+    <div class="sec">最近观看（fm.history）</div>
+    <div class="hist" id="hist"><div class="empty">读取中…</div></div>
+
+    <div class="foot">
+      本页通过 <b>window.fm</b> 调用 Native SDK：搜索 / 播放 / 跨域请求 / 缓存 / 最近观看。<br>
+      你也可以在「网页首页」Tab 添加自己的 .html 文件作为首页。
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var entries = [
+        { label: "点播首页", ico: "🎬", action: "openVod" },
+        { label: "直播", ico: "📺", action: "openLive" },
+        { label: "收藏", ico: "⭐", action: "openKeep" },
+        { label: "设置", ico: "⚙️", action: "openSetting" }
+      ];
+
+      function render() {
+        var grid = document.getElementById("grid");
+        var html = "";
+        entries.forEach(function (e) {
+          html += '<article class="card"><button type="button" data-action="' + e.action +
+            '"><span class="ico">' + e.ico + '</span>' + e.label + '</button></article>';
+        });
+        grid.innerHTML = html;
+      }
+
+      function toast(msg) {
+        if (window.fm && fm.ext && fm.ext.toast) fm.ext.toast(msg);
+      }
+
+      function doSearch() {
+        var kw = (document.getElementById("kw").value || "").trim();
+        if (!kw) { toast("请输入关键词"); return; }
+        if (window.fm && fm.search) fm.search(kw, { direct: true });
+        else alert("预览模式：将搜索 " + kw);
+      }
+
+      function fmt(ms) {
+        if (!ms || ms < 0) return "";
+        var s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+        function p(n) { return (n < 10 ? "0" : "") + n; }
+        return h > 0 ? h + ":" + p(m % 60) + ":" + p(s % 60) : m + ":" + p(s % 60);
+      }
+
+      function loadHistory() {
+        var box = document.getElementById("hist");
+        if (!window.fm || !fm.history) {
+          box.innerHTML = '<div class="empty">预览模式：App 内会显示最近观看</div>';
+          return;
+        }
+        Promise.resolve(fm.history()).then(function (list) {
+          if (!list || !list.length) {
+            box.innerHTML = '<div class="empty">还没有观看记录</div>';
+            return;
+          }
+          var html = "";
+          list.slice(0, 10).forEach(function (h) {
+            var pic = h.vodPic ? (fm.res ? fm.res(h.vodPic) : h.vodPic) : "";
+            var pct = (h.duration > 0 && h.position > 0)
+              ? Math.round(h.position * 100 / h.duration) : 0;
+            html += '<div class="row">' +
+              (pic ? '<img class="pic" src="' + pic + '" />' : '<div class="pic"></div>') +
+              '<div class="meta"><p class="name">' + (h.vodName || "未知") + '</p>' +
+              '<p class="note">' + (h.vodRemarks || "") +
+              (pct ? ' · ' + fmt(h.position) + ' / ' + pct + '%' : '') + '</p></div></div>';
+          });
+          box.innerHTML = html;
+        }).catch(function () {
+          box.innerHTML = '<div class="empty">读取最近观看失败</div>';
+        });
+      }
+
+      document.addEventListener("click", function (event) {
+        var btn = event.target.closest ? event.target.closest("[data-action]") : null;
+        if (!btn) return;
+        var action = btn.getAttribute("data-action");
+        if (action === "search") { doSearch(); return; }
+        if (!window.fm) { alert("预览模式：" + action); return; }
+        if (action === "openVod" && fm.openVod) fm.openVod();
+        else if (action === "openLive" && fm.openLive) fm.openLive();
+        else if (action === "openKeep" && fm.openKeep) fm.openKeep();
+        else if (action === "openSetting" && fm.openSetting) fm.openSetting();
+      });
+
+      var kwInput = document.getElementById("kw");
+      kwInput.addEventListener("keydown", function (e) {
+        if (e.keyCode === 13) doSearch();
+      });
+
+      function onReady() {
+        document.documentElement.classList.add("fm-native");
+        var b = document.getElementById("envBadge");
+        if (b) { b.textContent = "App"; }
+        loadHistory();
+      }
+
+      window.addEventListener("fmsdk", onReady);
+      window.addEventListener("fmresume", loadHistory);
+
+      render();
+      // 若 SDK 已就绪（document-start 情况），立即初始化
+      if (window.fm) onReady();
+    })();
+  </script>
+</body>
+</html>
