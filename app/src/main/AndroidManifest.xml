@@ -67,13 +67,13 @@
             android:screenOrientation="unspecified" />
 
         <activity
-            android:name=".ui.activity.PlayActivity"
+            android:name=".ui.activity.VideoActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/AppTheme.Fullscreen" />
 
         <activity
-            android:name=".ui.activity.LivePlayActivity"
+            android:name=".ui.activity.LiveVideoActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/AppTheme.Fullscreen" />

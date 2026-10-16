@@ -208,3 +208,4 @@ public class Danmaku {
         return App.gson().toJson(this);
     }
 }
+}
