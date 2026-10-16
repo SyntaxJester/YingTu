@@ -25,24 +25,38 @@ jobs:
       - name: Set ANDROID_HOME env
         run: echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
-      # runner 已预装 android-37.0，symlink 成 android-37 供 AGP 识别
-      - name: Link android-37 platform
+      # 下载 cmdline-tools 并安装 android-37 platform
+      - name: Install Android platform-37 via sdkmanager
         run: |
-          ls "$ANDROID_HOME/platforms"
-          if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
-            ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          # 下载 cmdline-tools
+          if [ ! -d "$ANDROID_HOME/cmdline-tools/latest" ]; then
+            mkdir -p "$ANDROID_HOME/cmdline-tools"
+            cd "$ANDROID_HOME/cmdline-tools"
+            wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
+            unzip -q cmdtools.zip
+            mv cmdline-tools latest
           fi
-          ls -la "$ANDROID_HOME/platforms" | grep android-37
-          test -d "$ANDROID_HOME/platforms/android-37" && echo "android-37 symlink OK"
+          # 安装 android-37
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37"
+          ls "$ANDROID_HOME/platforms" | grep android-37
+          # 写 local.properties
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          cat local.properties
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.11.1'
           cache-disabled: true
 
       - name: Build debug APK
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+        run: |
+          cat local.properties
+          ls "$ANDROID_HOME/platforms" | grep android-37
+          gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
