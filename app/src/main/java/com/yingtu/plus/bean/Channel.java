@@ -431,3 +431,4 @@ public class Channel {
         if (!name.isEmpty()) return Objects.hash(name);
         if (!number.isEmpty()) return Objects.hash(number);
         return 0;
+}
