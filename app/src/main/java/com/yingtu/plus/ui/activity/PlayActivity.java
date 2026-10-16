@@ -182,6 +182,11 @@ public class PlayActivity extends BaseActivity
         tvOsdSeries = find(R.id.tvOsdSeries);
         tvOsdTime = find(R.id.tvOsdTime);
         tvOsdTotal = find(R.id.tvOsdTotal);
+        // 四角 OSD 常驻显示（webhtv 风格）
+        osdTopLeft.setVisibility(View.VISIBLE);
+        osdTopRight.setVisibility(View.VISIBLE);
+        osdBottomLeft.setVisibility(View.VISIBLE);
+        osdBottomRight.setVisibility(View.VISIBLE);
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
@@ -593,10 +598,6 @@ public class PlayActivity extends BaseActivity
         topControlBar.setVisibility(View.VISIBLE);
         controlBar.setVisibility(View.VISIBLE);
         centerControls.setVisibility(View.VISIBLE);
-        osdTopLeft.setVisibility(View.VISIBLE);
-        osdTopRight.setVisibility(View.VISIBLE);
-        osdBottomLeft.setVisibility(View.VISIBLE);
-        osdBottomRight.setVisibility(View.VISIBLE);
         hideHandler.removeCallbacks(hideControlsRunnable);
         hideControlsRunnable = () -> {
             if (controlsVisible) hideControls();
@@ -610,10 +611,7 @@ public class PlayActivity extends BaseActivity
         topControlBar.setVisibility(View.GONE);
         controlBar.setVisibility(View.GONE);
         centerControls.setVisibility(View.GONE);
-        osdTopLeft.setVisibility(View.GONE);
-        osdTopRight.setVisibility(View.GONE);
-        osdBottomLeft.setVisibility(View.GONE);
-        osdBottomRight.setVisibility(View.GONE);
+        // 四角 OSD 参考 webhtv：播放期间常驻，不随控制栏隐藏
     }
 
     // ================= widget 提示 =================
@@ -666,6 +664,8 @@ public class PlayActivity extends BaseActivity
         player.setSpeed(SPEEDS[speedIndex]);
         player.start();
         setPlayIcon(true);
+        // 初始化四角 OSD 内容
+        refreshOsd(0, player.getDuration());
         ui.removeCallbacks(ticker);
         ui.post(ticker);
     }
