@@ -21,42 +21,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 让 Gradle 能找到 ANDROID_HOME
-      - name: Set ANDROID_HOME env
-        run: echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-
-      # 下载 cmdline-tools 并安装 android-37 platform
-      - name: Install Android platform-37 via sdkmanager
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          # 下载 cmdline-tools
-          if [ ! -d "$ANDROID_HOME/cmdline-tools/latest" ]; then
-            mkdir -p "$ANDROID_HOME/cmdline-tools"
-            cd "$ANDROID_HOME/cmdline-tools"
-            wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
-            unzip -q cmdtools.zip
-            mv cmdline-tools latest
-          fi
-          # 安装 android-37
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37"
-          ls "$ANDROID_HOME/platforms" | grep android-37
-          # 写 local.properties
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
-          cat local.properties
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.11.1'
+          gradle-version: '8.4'
           cache-disabled: true
 
       - name: Build debug APK
-        run: |
-          cat local.properties
-          ls "$ANDROID_HOME/platforms" | grep android-37
-          gradle :app:assembleDebug --no-daemon --stacktrace
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
