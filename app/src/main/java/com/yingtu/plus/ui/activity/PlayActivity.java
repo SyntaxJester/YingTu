@@ -197,7 +197,21 @@ public class PlayActivity extends BaseActivity
         }
 
         // 数据就绪后再填充四角 OSD（必须在 vodName / seriesList 赋值之后）
-        fillOsdNow();
+        // 内联执行，避免 R8 优化掉方法调用
+        if (tvOsdTitle != null && vodName != null) tvOsdTitle.setText(vodName);
+        if (tvOsdDecoder != null) tvOsdDecoder.setText("硬解 · " + PlayerFactory.coreName(PlayerFactory.currentCore()));
+        if (tvOsdSpeed != null) tvOsdSpeed.setText(String.format(Locale.getDefault(), "%.2fx", SPEEDS[speedIndex]));
+        if (tvOsdCore != null) tvOsdCore.setText(PlayerFactory.coreName(PlayerFactory.currentCore()));
+        if (tvOsdSeries != null && seriesList != null && !seriesList.isEmpty()) {
+            VodInfo.VodSeries s = seriesList.get(Math.min(currentEpisodeIndex, seriesList.size() - 1));
+            tvOsdSeries.setText(String.format(Locale.getDefault(), "%s (%d/%d)", s.name, currentEpisodeIndex + 1, seriesList.size()));
+        }
+        if (tvOsdTime != null) tvOsdTime.setText("00:00");
+        if (tvOsdTotal != null) tvOsdTotal.setText("--:--");
+        if (osdTopLeft != null) osdTopLeft.setVisibility(View.VISIBLE);
+        if (osdTopRight != null) osdTopRight.setVisibility(View.VISIBLE);
+        if (osdBottomLeft != null) osdBottomLeft.setVisibility(View.VISIBLE);
+        if (osdBottomRight != null) osdBottomRight.setVisibility(View.VISIBLE);
 
         // ===== 点击事件 =====
         find(R.id.ivBack).setOnClickListener(v -> finish());
