@@ -182,8 +182,6 @@ public class PlayActivity extends BaseActivity
         tvOsdSeries = find(R.id.tvOsdSeries);
         tvOsdTime = find(R.id.tvOsdTime);
         tvOsdTotal = find(R.id.tvOsdTotal);
-        // 立即填充四角 OSD 内容（不依赖 player 就绪）
-        fillOsdNow();
 
         String title = getIntent().getStringExtra(KEY_TITLE);
         tvTitle.setText(title == null ? "" : title);
@@ -197,6 +195,9 @@ public class PlayActivity extends BaseActivity
             btnPrev.setEnabled(currentEpisodeIndex > 0);
             btnNext.setEnabled(currentEpisodeIndex < seriesList.size() - 1);
         }
+
+        // 数据就绪后再填充四角 OSD（必须在 vodName / seriesList 赋值之后）
+        fillOsdNow();
 
         // ===== 点击事件 =====
         find(R.id.ivBack).setOnClickListener(v -> finish());
