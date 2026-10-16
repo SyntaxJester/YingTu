@@ -39,4 +39,45 @@
     <color name="note_bg">#B3000000</color>
     <!-- 豆瓣热播角标底色 -->
     <color name="badge_bg">#CC19B2C6</color>
+
+    <!-- 基础颜色（drawable 引用） -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- 透明度变体 -->
+    <color name="white_80">#CCFFFFFF</color>
+    <color name="white_20">#33FFFFFF</color>
+    <color name="white_15">#26FFFFFF</color>
+    <color name="black_40">#66000000</color>
+
+    <!-- Material Amber -->
+    <color name="amber_300">#FFD54F</color>
+
+    <!-- 备注/角标 -->
+    <color name="bg_remark">#B3000000</color>
+    <color name="bg_site">#33FFFFFF</color>
+    <color name="bg_year">#B3000000</color>
+    <color name="mipmap_background">#00000000</color>
+    <color name="startup_background">#17678A</color>
+
+    <!-- 同步设备 -->
+    <color name="sync_device_text">#FFFFFF</color>
+    <color name="sync_device_subtext">#80FFFFFF</color>
+
+    <!-- 对话框 -->
+    <color name="dialog_card_bg">#FF1E1E1E</color>
+    <color name="dialog_card_stroke">#FF333333</color>
+    <color name="dialog_card_action_text">#FF4CAF50</color>
+    <color name="dialog_checkbox_tint">#FF4CAF50</color>
+    <color name="dialog_outlined_button_bg">#00FFFFFF</color>
+    <color name="dialog_outlined_button_stroke">#FFBDBDBD</color>
+    <color name="dialog_outlined_button_text">#FFFFFFFF</color>
+    <color name="dialog_primary_button_bg">#FF4CAF50</color>
+    <color name="dialog_primary_button_text">#FFFFFFFF</color>
+    <color name="dialog_text_button">#FF4CAF50</color>
+    <color name="dialog_toggle_button_bg">#FF424242</color>
+    <color name="dialog_toggle_button_text">#FFFFFFFF</color>
+    <color name="dialog_tonal_button_bg">#FF333333</color>
+    <color name="dialog_tonal_button_text">#FFBDBDBD</color>
 </resources>
