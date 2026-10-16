@@ -1,4 +1,4 @@
-package com.yingtu.plus.bean;
+package com.yingtu.plus.com.yingtu.plus.bean;
 
 import java.io.Serializable;
 import java.util.ArrayList;

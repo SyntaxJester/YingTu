@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.lyrics;
+package com.yingtu.plus.com.yingtu.plus.player.lyrics;
 
 import android.content.Context;
 import android.graphics.PixelFormat;

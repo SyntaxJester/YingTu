@@ -1,4 +1,4 @@
-package com.yingtu.plus.api.parser;
+package com.yingtu.plus.com.yingtu.plus.api.parser;
 
 import android.util.Log;
 

@@ -1,4 +1,4 @@
-package com.yingtu.plus.bean;
+package com.yingtu.plus.com.yingtu.plus.bean;
 
 import android.graphics.Color;
 import android.text.TextUtils;

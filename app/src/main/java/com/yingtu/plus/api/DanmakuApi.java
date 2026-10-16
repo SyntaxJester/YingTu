@@ -1,4 +1,4 @@
-package com.yingtu.plus.api;
+package com.yingtu.plus.com.yingtu.plus.api;
 
 import android.net.Uri;
 import android.text.TextUtils;

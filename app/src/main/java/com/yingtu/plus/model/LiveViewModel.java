@@ -1,4 +1,4 @@
-package com.yingtu.plus.model;
+package com.yingtu.plus.com.yingtu.plus.model;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

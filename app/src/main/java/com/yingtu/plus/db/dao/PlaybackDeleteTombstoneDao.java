@@ -1,4 +1,4 @@
-package com.yingtu.plus.db.dao;
+package com.yingtu.plus.com.yingtu.plus.db.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;

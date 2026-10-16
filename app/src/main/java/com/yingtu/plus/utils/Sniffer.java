@@ -1,4 +1,4 @@
-package com.yingtu.plus.utils;
+package com.yingtu.plus.com.yingtu.plus.utils;
 
 import android.net.Uri;
 import android.text.SpannableStringBuilder;

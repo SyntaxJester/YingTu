@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Keeps renderer parameters and per-playback experiment identity consistent. */
 public final class ExoFrameSchedulingSessionLock {

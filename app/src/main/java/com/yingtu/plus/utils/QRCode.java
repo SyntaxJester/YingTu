@@ -1,4 +1,4 @@
-package com.yingtu.plus.utils;
+package com.yingtu.plus.com.yingtu.plus.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

@@ -1,4 +1,4 @@
-package com.yingtu.plus.utils;
+package com.yingtu.plus.com.yingtu.plus.utils;
 
 import com.yingtu.plus.bean.Episode;
 import com.yingtu.plus.setting.Setting;

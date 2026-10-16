@@ -1,4 +1,4 @@
-package com.yingtu.plus.model;
+package com.yingtu.plus.com.yingtu.plus.model;
 
 import com.yingtu.plus.api.SiteApi;
 import com.yingtu.plus.bean.Result;

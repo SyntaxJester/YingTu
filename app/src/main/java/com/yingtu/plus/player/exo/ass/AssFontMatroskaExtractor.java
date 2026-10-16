@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo.ass;
+package com.yingtu.plus.com.yingtu.plus.player.exo.ass;
 
 import androidx.media3.common.ParserException;
 import androidx.media3.extractor.ExtractorInput;

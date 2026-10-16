@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 import android.os.Build;
 import android.view.Surface;

@@ -1,4 +1,4 @@
-package com.yingtu.plus.utils;
+package com.yingtu.plus.com.yingtu.plus.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;

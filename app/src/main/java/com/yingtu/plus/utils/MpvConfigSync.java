@@ -1,4 +1,4 @@
-package com.yingtu.plus.utils;
+package com.yingtu.plus.com.yingtu.plus.utils;
 
 import com.yingtu.plus.player.mpv.MpvConfigStore;
 import com.github.catvod.crawler.SpiderDebug;

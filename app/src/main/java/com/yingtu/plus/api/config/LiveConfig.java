@@ -1,4 +1,4 @@
-package com.yingtu.plus.api.config;
+package com.yingtu.plus.com.yingtu.plus.api.config;
 
 import android.text.TextUtils;
 

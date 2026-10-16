@@ -1,4 +1,4 @@
-package com.yingtu.plus.api.loader;
+package com.yingtu.plus.com.yingtu.plus.api.loader;
 
 final class CspClassLoadingPolicy {
 

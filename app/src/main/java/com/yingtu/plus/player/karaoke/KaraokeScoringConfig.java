@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.karaoke;
+package com.yingtu.plus.com.yingtu.plus.player.karaoke;
 
 public class KaraokeScoringConfig {
 

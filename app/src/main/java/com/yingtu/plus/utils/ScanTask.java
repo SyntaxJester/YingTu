@@ -1,4 +1,4 @@
-package com.yingtu.plus.utils;
+package com.yingtu.plus.com.yingtu.plus.utils;
 
 import com.yingtu.plus.App;
 import com.yingtu.plus.bean.Device;

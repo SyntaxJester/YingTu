@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.danmaku;
+package com.yingtu.plus.com.yingtu.plus.player.danmaku;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.codec;
+package com.yingtu.plus.com.yingtu.plus.player.codec;
 
 import android.content.Context;
 import android.media.MediaCodecInfo;

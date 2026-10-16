@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 import static androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS;
 

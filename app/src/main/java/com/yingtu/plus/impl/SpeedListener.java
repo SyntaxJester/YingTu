@@ -1,4 +1,4 @@
-package com.yingtu.plus.impl;
+package com.yingtu.plus.com.yingtu.plus.impl;
 
 public interface SpeedListener {
 

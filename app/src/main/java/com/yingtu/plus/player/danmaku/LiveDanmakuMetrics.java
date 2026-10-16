@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.danmaku;
+package com.yingtu.plus.com.yingtu.plus.player.danmaku;
 
 import java.util.concurrent.atomic.AtomicLong;
 

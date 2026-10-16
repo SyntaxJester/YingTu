@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Small state machine used to detect a tunneled session that never produces its first frame. */
 public final class ExoTunnelingWatchdog {

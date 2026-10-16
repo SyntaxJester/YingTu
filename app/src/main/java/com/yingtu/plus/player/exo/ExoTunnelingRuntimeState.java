@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;

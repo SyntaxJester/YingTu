@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Product boundaries for dynamically activated EXO network protection. */
 public final class ExoNetworkProtectionPolicy {

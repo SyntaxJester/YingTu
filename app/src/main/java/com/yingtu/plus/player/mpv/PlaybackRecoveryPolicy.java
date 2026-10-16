@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.mpv;
+package com.yingtu.plus.com.yingtu.plus.player.mpv;
 
 /** Pure decisions shared by the watchdog and the separate recovery process. */
 public final class PlaybackRecoveryPolicy {

@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.engine;
+package com.yingtu.plus.com.yingtu.plus.player.engine;
 
 public record PlayerCacheState(
         boolean available,

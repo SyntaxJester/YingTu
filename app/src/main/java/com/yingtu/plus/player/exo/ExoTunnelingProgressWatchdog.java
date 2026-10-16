@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Detects a tunneled player that is READY/playing but no longer advances its media position. */
 public final class ExoTunnelingProgressWatchdog {

@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /**
  * Conservative action policy for an EXO RTSP live session that keeps falling behind.

@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.cache;
+package com.yingtu.plus.com.yingtu.plus.player.cache;
 
 public final class DiskCacheCapacityPolicy {
 

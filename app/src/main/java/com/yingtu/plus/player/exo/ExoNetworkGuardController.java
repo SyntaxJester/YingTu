@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Deadline-aware, hysteretic controller for adaptive EXO network protection. */
 public final class ExoNetworkGuardController {

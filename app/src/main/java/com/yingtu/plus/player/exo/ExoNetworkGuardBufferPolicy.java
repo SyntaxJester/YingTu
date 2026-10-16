@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Derives a safety reserve above the active rebuffer-resume threshold. */
 public final class ExoNetworkGuardBufferPolicy {

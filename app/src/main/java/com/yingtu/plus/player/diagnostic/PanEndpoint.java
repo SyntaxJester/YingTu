@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.diagnostic;
+package com.yingtu.plus.com.yingtu.plus.player.diagnostic;
 
 import java.net.URI;
 import java.util.Collections;

@@ -1,4 +1,4 @@
-package com.yingtu.plus.util;
+package com.yingtu.plus.com.yingtu.plus.util;
 
 /**
  * Hawk 持久化存储用到的所有 key 常量。

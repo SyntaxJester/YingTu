@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.lut;
+package com.yingtu.plus.com.yingtu.plus.player.lut;
 
 import android.content.Context;
 

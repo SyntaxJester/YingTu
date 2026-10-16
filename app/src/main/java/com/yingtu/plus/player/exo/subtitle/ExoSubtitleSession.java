@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo.subtitle;
+package com.yingtu.plus.com.yingtu.plus.player.exo.subtitle;
 
 import android.os.Handler;
 import android.os.Looper;

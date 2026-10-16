@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.ijk;
+package com.yingtu.plus.com.yingtu.plus.player.ijk;
 
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Prefers;

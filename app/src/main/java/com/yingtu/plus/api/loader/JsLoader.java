@@ -1,4 +1,4 @@
-package com.yingtu.plus.api.loader;
+package com.yingtu.plus.com.yingtu.plus.api.loader;
 
 import com.yingtu.plus.App;
 import com.fongmi.quickjs.crawler.Loader;

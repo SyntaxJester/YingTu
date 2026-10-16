@@ -1,4 +1,4 @@
-package com.yingtu.plus.model;
+package com.yingtu.plus.com.yingtu.plus.model;
 
 public record SearchProgress(int current, int total, boolean finished) {
 

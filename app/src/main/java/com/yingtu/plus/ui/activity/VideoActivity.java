@@ -1,4 +1,4 @@
-package com.yingtu.plus.ui.activity;
+package com.yingtu.plus.com.yingtu.plus.ui.activity;
 
 import android.annotation.SuppressLint;
 import android.animation.ObjectAnimator;

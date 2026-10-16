@@ -1,4 +1,4 @@
-package com.yingtu.plus.player;
+package com.yingtu.plus.com.yingtu.plus.player;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

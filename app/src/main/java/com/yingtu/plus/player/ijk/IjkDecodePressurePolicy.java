@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.ijk;
+package com.yingtu.plus.com.yingtu.plus.player.ijk;
 
 import com.yingtu.plus.player.PlaybackAutoContext;
 

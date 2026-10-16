@@ -1,4 +1,4 @@
-package com.yingtu.plus.bean.drive;
+package com.yingtu.plus.com.yingtu.plus.bean.drive;
 
 import android.text.TextUtils;
 

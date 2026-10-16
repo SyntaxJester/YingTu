@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.karaoke;
+package com.yingtu.plus.com.yingtu.plus.player.karaoke;
 
 import android.Manifest;
 import android.content.pm.PackageManager;

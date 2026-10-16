@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 import com.yingtu.plus.setting.PlayerSetting;
 import com.github.catvod.crawler.SpiderDebug;

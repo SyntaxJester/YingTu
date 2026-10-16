@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.extractor;
+package com.yingtu.plus.com.yingtu.plus.player.extractor;
 
 import android.net.Uri;
 import android.os.SystemClock;

@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.mpv;
+package com.yingtu.plus.com.yingtu.plus.player.mpv;
 
 import android.app.Activity;
 import android.app.Application;

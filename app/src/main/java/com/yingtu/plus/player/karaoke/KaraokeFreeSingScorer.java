@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.karaoke;
+package com.yingtu.plus.com.yingtu.plus.player.karaoke;
 
 import com.yingtu.plus.player.lyrics.LyricsLine;
 import com.yingtu.plus.player.lyrics.LyricsParser;

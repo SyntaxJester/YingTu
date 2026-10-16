@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Aggregates Media3 frame processing offsets without logging every rendered frame. */
 public final class ExoFrameTimingMetrics {

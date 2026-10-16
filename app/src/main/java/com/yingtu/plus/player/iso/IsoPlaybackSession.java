@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.iso;
+package com.yingtu.plus.com.yingtu.plus.player.iso;
 
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Path;

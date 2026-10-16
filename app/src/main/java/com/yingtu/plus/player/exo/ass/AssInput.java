@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo.ass;
+package com.yingtu.plus.com.yingtu.plus.player.exo.ass;
 
 import org.mozilla.universalchardet.UniversalDetector;
 

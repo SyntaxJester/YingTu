@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo.ass;
+package com.yingtu.plus.com.yingtu.plus.player.exo.ass;
 
 import androidx.media3.common.C;
 import androidx.media3.common.ColorInfo;

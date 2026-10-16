@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.engine;
+package com.yingtu.plus.com.yingtu.plus.player.engine;
 
 /** Conservative playable-duration estimate for IJK's native audio/video queues. */
 final class IjkBufferedDurationPolicy {

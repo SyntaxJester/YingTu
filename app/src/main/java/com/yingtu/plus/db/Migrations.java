@@ -1,4 +1,4 @@
-package com.yingtu.plus.db;
+package com.yingtu.plus.com.yingtu.plus.db;
 
 import androidx.annotation.NonNull;
 import androidx.room.migration.Migration;

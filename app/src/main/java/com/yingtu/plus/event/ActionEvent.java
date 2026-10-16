@@ -1,4 +1,4 @@
-package com.yingtu.plus.event;
+package com.yingtu.plus.com.yingtu.plus.event;
 
 import com.yingtu.plus.BuildConfig;
 

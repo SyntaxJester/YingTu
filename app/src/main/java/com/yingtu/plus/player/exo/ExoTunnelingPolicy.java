@@ -1,4 +1,4 @@
-package com.yingtu.plus.player.exo;
+package com.yingtu.plus.com.yingtu.plus.player.exo;
 
 /** Conservative gate for requesting Media3 audio/video tunneling. */
 public final class ExoTunnelingPolicy {
