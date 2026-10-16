@@ -21,8 +21,25 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # 让 Gradle 能找到 ANDROID_HOME
+      - name: Set ANDROID_HOME env
+        run: echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+
+      # 显式安装 android-37 platform
+      - name: Install Android platform-37
+        run: |
+          echo "$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" 2>/dev/null || echo "no platforms dir"
+          # 接受全部 license
+          yes | sdkmanager --licenses || true
+          # 安装 platform-37
+          sdkmanager "platforms;android-37"
+          # 验证
+          ls "$ANDROID_HOME/platforms"
+          test -d "$ANDROID_HOME/platforms/android-37" && echo "android-37 OK"
+
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
           cache-disabled: true
