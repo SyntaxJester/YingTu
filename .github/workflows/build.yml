@@ -25,18 +25,15 @@ jobs:
       - name: Set ANDROID_HOME env
         run: echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
-      # 显式安装 android-37 platform
-      - name: Install Android platform-37
+      # runner 已预装 android-37.0，symlink 成 android-37 供 AGP 识别
+      - name: Link android-37 platform
         run: |
-          echo "$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" 2>/dev/null || echo "no platforms dir"
-          # 接受全部 license
-          yes | sdkmanager --licenses || true
-          # 安装 platform-37
-          sdkmanager "platforms;android-37"
-          # 验证
           ls "$ANDROID_HOME/platforms"
-          test -d "$ANDROID_HOME/platforms/android-37" && echo "android-37 OK"
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
+          fi
+          ls -la "$ANDROID_HOME/platforms" | grep android-37
+          test -d "$ANDROID_HOME/platforms/android-37" && echo "android-37 symlink OK"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
