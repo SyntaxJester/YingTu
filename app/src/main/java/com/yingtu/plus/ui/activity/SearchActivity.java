@@ -1,4 +1,4 @@
-package com.yingtu.plus.com.yingtu.plus.ui.activity;
+package com.yingtu.plus.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;

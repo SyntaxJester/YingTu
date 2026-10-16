@@ -1,4 +1,4 @@
-package com.yingtu.plus.com.yingtu.plus.ui.activity;
+package com.yingtu.plus.ui.activity;
 
 import android.content.Intent;
 import android.text.TextUtils;
@@ -26,7 +26,7 @@ import android.widget.ProgressBar;
 
 /**
  * 详情页：顶部封面 + 影片信息，中部线路切换，底部选集网格。
- * 点击某一集 → 跳转 VideoActivity 播放。
+ * 点击某一集 → 跳转 PlayActivity 播放。
  */
 public class DetailActivity extends BaseActivity {
 
@@ -120,18 +120,18 @@ public class DetailActivity extends BaseActivity {
             resume = h.position;
         }
 
-        Intent i = new Intent(this, VideoActivity.class);
-        i.putExtra(VideoActivity.KEY_TITLE, vodInfo.name + " " + series.name);
-        i.putExtra(VideoActivity.KEY_URL, series.url);
-        i.putExtra(VideoActivity.KEY_SOURCE, sourceKey);
-        i.putExtra(VideoActivity.KEY_VOD_ID, vodId);
-        i.putExtra(VideoActivity.KEY_VOD_NAME, vodInfo.name);
-        i.putExtra(VideoActivity.KEY_VOD_PIC, vodInfo.pic);
-        i.putExtra(VideoActivity.KEY_FLAG, vodInfo.playFlag);
-        i.putExtra(VideoActivity.KEY_FLAG_NAME, flag.name);
-        i.putExtra(VideoActivity.KEY_INDEX, seriesIndex);
-        i.putExtra(VideoActivity.KEY_EPISODE, series.name);
-        i.putExtra(VideoActivity.KEY_POSITION, resume);
+        Intent i = new Intent(this, PlayActivity.class);
+        i.putExtra(PlayActivity.KEY_TITLE, vodInfo.name + " " + series.name);
+        i.putExtra(PlayActivity.KEY_URL, series.url);
+        i.putExtra(PlayActivity.KEY_SOURCE, sourceKey);
+        i.putExtra(PlayActivity.KEY_VOD_ID, vodId);
+        i.putExtra(PlayActivity.KEY_VOD_NAME, vodInfo.name);
+        i.putExtra(PlayActivity.KEY_VOD_PIC, vodInfo.pic);
+        i.putExtra(PlayActivity.KEY_FLAG, vodInfo.playFlag);
+        i.putExtra(PlayActivity.KEY_FLAG_NAME, flag.name);
+        i.putExtra(PlayActivity.KEY_INDEX, seriesIndex);
+        i.putExtra(PlayActivity.KEY_EPISODE, series.name);
+        i.putExtra(PlayActivity.KEY_POSITION, resume);
         startActivity(i);
     }
 

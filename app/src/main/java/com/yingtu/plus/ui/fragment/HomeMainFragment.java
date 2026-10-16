@@ -1,4 +1,4 @@
-package com.yingtu.plus.com.yingtu.plus.ui.fragment;
+package com.yingtu.plus.ui.fragment;
 
 import android.content.Intent;
 import android.view.LayoutInflater;

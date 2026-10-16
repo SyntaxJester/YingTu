@@ -1,25 +1,13 @@
-package com.yingtu.plus.com.yingtu.plus.api.loader;
+package com.yingtu.plus.api.loader;
 
-import android.content.Context;
-
-import com.yingtu.plus.App;
-import com.yingtu.plus.utils.Download;
-import com.yingtu.plus.utils.UrlUtil;
+import com.yingtu.plus.base.App;
 import com.github.catvod.crawler.Spider;
-import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.crawler.SpiderNull;
-import com.github.catvod.net.OkHttp;
-import com.github.catvod.utils.Path;
-import com.github.catvod.utils.Util;
-
-import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import dalvik.system.DexClassLoader;
@@ -27,252 +15,168 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+/**
+ * CatVod JAR Spider 加载器（参考 webhtv/FongMi 的 JarLoader 精简实现）。
+ *
+ * 负责：下载/缓存 spider.jar → DexClassLoader 加载 → 反射调用
+ * com.github.catvod.spider.Init.init(Context) 完成壳 so 释放与子 dex 加载 →
+ * 按 api（csp_XxxGuard）实例化具体 Spider。
+ */
 public class JarLoader {
 
-    private final ConcurrentHashMap<String, DexClassLoader> loaders;
-    private final ConcurrentHashMap<String, ProxyMethod> methods;
-    private final ConcurrentHashMap<String, Spider> spiders;
-    private final ConcurrentHashMap<String, Object> locks;
-    private volatile String recent;
-
-    public JarLoader() {
-        loaders = new ConcurrentHashMap<>();
-        methods = new ConcurrentHashMap<>();
-        spiders = new ConcurrentHashMap<>();
-        locks = new ConcurrentHashMap<>();
-    }
+    private final ConcurrentHashMap<String, DexClassLoader> loaders = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Spider> spiders = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Method> proxyMethods = new ConcurrentHashMap<>();
+    private String recent;
 
     public void clear() {
-        SpiderDebug.log("jar-loader", "clear loaders=%s spiders=%s methods=%s", loaders.size(), spiders.size(), methods.size());
-        spiders.values().forEach(Spider::destroy);
-        methods.values().forEach(ProxyMethod::close);
+        for (Spider s : spiders.values()) {
+            try { s.destroy(); } catch (Throwable ignored) {}
+        }
         loaders.clear();
-        methods.clear();
         spiders.clear();
-        locks.clear();
+        proxyMethods.clear();
         recent = null;
     }
 
-    public void setRecent(String recent) {
-        this.recent = recent;
-        SpiderDebug.log("jar-loader", "recent=%s", recent);
+    public void setRecent(String jar) {
+        this.recent = md5(jar);
+    }
+
+    /** 下载并加载 jar（key 为 jar 的 md5），已加载则跳过。 */
+    public synchronized void parseJar(String key, String jar) {
+        if (loaders.containsKey(key)) return;
+        try {
+            // 去掉 ;md5;... 校验段
+            String[] texts = jar.split(";md5;");
+            jar = texts[0];
+            File file;
+            if (jar.startsWith("http")) {
+                file = download(jar);
+            } else if (jar.startsWith("file")) {
+                file = new File(toLocalPath(jar));
+            } else if (jar.startsWith("assets")) {
+                return; // 本工程不内置 assets jar
+            } else {
+                return;
+            }
+            if (file == null || !file.exists() || file.length() == 0) return;
+            load(key, file);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     private void load(String key, File file) {
-        long start = System.currentTimeMillis();
-        if (Thread.interrupted()) {
-            SpiderDebug.log("jar-loader", "load skip interrupted key=%s", key);
-            return;
-        }
-        if (!Path.exists(file)) {
-            SpiderDebug.log("jar-loader", "load skip missing key=%s file=%s", key, file);
-            return;
-        }
-        if (!file.setReadOnly()) {
-            SpiderDebug.log("jar-loader", "load skip readonly failed key=%s file=%s size=%s", key, file.getAbsolutePath(), file.length());
-            return;
-        }
-        String cachePath = Path.jar().getAbsolutePath();
-        SpiderDebug.log("jar-loader", "load start key=%s file=%s size=%s cache=%s", key, file.getAbsolutePath(), file.length(), cachePath);
-        DexClassLoader loader = new CspDexClassLoader(file.getAbsolutePath(), cachePath, cachePath, App.get().getClassLoader());
-        invokeInit(key, loader);
-        invokeNetworkCompat(key, loader);
-        invokeProxy(key, loader, file);
-        loaders.put(key, loader);
-        SpiderDebug.log("jar-loader", "load done key=%s cost=%sms", key, System.currentTimeMillis() - start);
-    }
-
-    private void invokeNetworkCompat(String key, DexClassLoader loader) {
         try {
-            Class<?> clz = loader.loadClass("com.github.catvod.parser.merge.j0.b");
-            Method method = clz.getMethod("b", okhttp3.OkHttpClient.class);
-            OkHttpClient client = OkHttp.client().newBuilder().addInterceptor(chain -> {
-                Request request = chain.request();
-                boolean iframe = request.url().host().endsWith("youtube.com") && request.url().encodedPath().contains("iframe_api");
-                long start = System.currentTimeMillis();
-                try {
-                    Response response = chain.proceed(request);
-                    if (iframe) SpiderDebug.log("youtube-iframe", "response code=%s final=%s type=%s encoding=%s length=%s cost=%sms", response.code(), response.request().url(), response.header("Content-Type"), response.header("Content-Encoding"), response.header("Content-Length"), System.currentTimeMillis() - start);
-                    return response;
-                } catch (Throwable e) {
-                    if (iframe) SpiderDebug.log("youtube-iframe", "failed url=%s cost=%sms error=%s", request.url(), System.currentTimeMillis() - start, error(e));
-                    throw e;
-                }
-            }).build();
-            Class<?> environment = loader.loadClass("com.github.catvod.parser.merge.j0.c");
-            environment.getConstructor(okhttp3.OkHttpClient.class).newInstance(client);
-            SpiderDebug.log("jar-loader", "network client injected key=%s", key);
-            try {
-                Class<?> provider = loader.loadClass("com.github.catvod.parser.merge.P1.P");
-                Object fetcher = provider.getMethod("b").invoke(null);
-                Object response = clz.getMethod("a", String.class).invoke(fetcher, "https://www.youtube.com/iframe_api");
-                String body = (String) response.getClass().getMethod("a").invoke(response);
-                SpiderDebug.log("youtube-iframe", "probe success chars=%s", body == null ? -1 : body.length());
-            } catch (Throwable e) {
-                Throwable cause = e;
-                while (cause.getCause() != null) cause = cause.getCause();
-                SpiderDebug.log("youtube-iframe", "probe failed error=%s", cause.getClass().getName() + ":" + cause.getMessage());
-                SpiderDebug.log("youtube-iframe", cause);
-            }
-        } catch (ClassNotFoundException | NoSuchMethodException ignored) {
-            // Optional compatibility hook used only by jars which expose it.
+            file.setReadOnly();
+            File cache = new File(App.context().getCacheDir(), "catvod_jar");
+            if (!cache.exists()) cache.mkdirs();
+            DexClassLoader loader = new DexClassLoader(
+                    file.getAbsolutePath(), cache.getAbsolutePath(), null,
+                    App.context().getClassLoader());
+            invokeInit(loader);
+            invokeProxy(key, loader);
+            loaders.put(key, loader);
         } catch (Throwable e) {
-            SpiderDebug.log("jar-loader", "network client inject failed key=%s error=%s", key, error(e));
-        }
-    }
-
-    private void invokeInit(String key, DexClassLoader loader) {
-        long start = System.currentTimeMillis();
-        try {
-            SpiderDebug.log("jar-loader", "jar init start key=%s", key);
-            Class<?> clz = loader.loadClass("com.github.catvod.spider.Init");
-            Method method = clz.getMethod("init", Context.class);
-            method.invoke(clz, App.get());
-            SpiderDebug.log("jar-loader", "jar init done key=%s cost=%sms", key, System.currentTimeMillis() - start);
-        } catch (Throwable e) {
-            SpiderDebug.log("jar-loader", "jar init error key=%s cost=%sms error=%s", key, System.currentTimeMillis() - start, error(e));
-            SpiderDebug.log("jar-loader", e);
             e.printStackTrace();
         }
     }
 
-    private void invokeProxy(String key, DexClassLoader loader, File file) {
-        long start = System.currentTimeMillis();
+    private void invokeInit(DexClassLoader loader) {
+        try {
+            Class<?> clz = loader.loadClass("com.github.catvod.spider.Init");
+            Method m = clz.getMethod("init", android.content.Context.class);
+            m.invoke(clz, App.context());
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void invokeProxy(String key, DexClassLoader loader) {
         try {
             Class<?> clz = loader.loadClass("com.github.catvod.spider.Proxy");
-            Method method = clz.getMethod("proxy", Map.class);
-            PanProxyCompat compat = null;
-            try {
-                compat = PanProxyCompat.install(file, loader, message -> SpiderDebug.log("pan-proxy", message));
-                if (compat != null) {
-                    SpiderDebug.log("jar-loader", "pan proxy lifecycle compat enabled key=%s sha256=%s", key, PanProxyCompat.JAR_SHA256);
-                }
-            } catch (Exception e) {
-                SpiderDebug.log("jar-loader", "pan proxy lifecycle compat unavailable key=%s error=%s", key, error(e));
-            }
-            methods.put(key, new ProxyMethod(method, compat));
-            SpiderDebug.log("jar-loader", "proxy method ready key=%s cost=%sms", key, System.currentTimeMillis() - start);
-        } catch (Throwable e) {
-            SpiderDebug.log("jar-loader", "proxy method missing key=%s cost=%sms error=%s", key, System.currentTimeMillis() - start, error(e));
-            e.printStackTrace();
-        }
-    }
-
-    public void parseJar(String key, String jar) {
-        if (loaders.containsKey(key)) return;
-        if (jar.startsWith("assets")) jar = UrlUtil.convert(jar);
-        Object lock = locks.computeIfAbsent(key, k -> new Object());
-        synchronized (lock) {
-            if (loaders.containsKey(key)) return;
-            String[] texts = jar.split(";md5;");
-            String md5 = texts.length > 1 ? texts[1].trim() : "";
-            if (md5.startsWith("http")) md5 = OkHttp.string(md5).trim();
-            jar = texts[0];
-            SpiderDebug.log("jar-loader", "parse start key=%s source=%s md5=%s", key, source(jar), !md5.isEmpty());
-            if (!md5.isEmpty() && Util.equals(jar, md5)) {
-                load(key, Path.jar(jar));
-            } else if (jar.startsWith("http")) {
-                load(key, Download.create(jar, Path.jar(jar)).get());
-            } else if (jar.startsWith("file")) {
-                load(key, Path.local(jar));
-            }
-        }
-    }
-
-    public DexClassLoader dex(String jar) {
-        try {
-            String jaKey = Util.md5(jar);
-            parseJar(jaKey, jar);
-            return loaders.get(jaKey);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return null;
+            Method m = clz.getMethod("proxy", Map.class);
+            proxyMethods.put(key, m);
+        } catch (Throwable ignored) {
         }
     }
 
     public Spider getSpider(String key, String api, String ext, String jar) {
-        String jaKey = Util.md5(jar);
-        String spKey = jaKey + key;
-        return spiders.computeIfAbsent(spKey, k -> {
-            long start = System.currentTimeMillis();
-            try {
-                SpiderDebug.log("jar-loader", "spider init start site=%s api=%s jar=%s ext=%s", key, api, jaKey, ext == null ? 0 : ext.length());
-                parseJar(jaKey, jar);
-                DexClassLoader loader = loaders.get(jaKey);
-                if (loader == null) {
-                    SpiderDebug.log("jar-loader", "spider init skip loader missing site=%s api=%s jar=%s cost=%sms", key, api, jaKey, System.currentTimeMillis() - start);
-                    return new SpiderNull();
-                }
-                Spider spider = (Spider) loader.loadClass("com.github.catvod.spider." + api.split("csp_")[1]).newInstance();
-                spider.siteKey = key;
-                spider.init(App.get(), ext);
-                SpiderDebug.log("jar-loader", "spider init done site=%s api=%s jar=%s class=%s cost=%sms", key, api, jaKey, spider.getClass().getName(), System.currentTimeMillis() - start);
-                return spider;
-            } catch (Throwable e) {
-                SpiderDebug.log("jar-loader", "spider init error site=%s api=%s jar=%s cost=%sms error=%s", key, api, jaKey, System.currentTimeMillis() - start, error(e));
-                SpiderDebug.log("jar-loader", e);
-                e.printStackTrace();
-                return new SpiderNull();
-            }
-        });
-    }
-
-    private String source(String jar) {
-        if (jar.startsWith("http")) return "http:" + Util.md5(jar);
-        if (jar.startsWith("file")) return "file:" + jar.length();
-        return jar;
-    }
-
-    private String error(Throwable e) {
-        Throwable cause = e.getCause() == null ? e : e.getCause();
-        return cause.getClass().getSimpleName() + ":" + cause.getMessage();
-    }
-
-    private DexClassLoader requireRecentLoader() {
-        DexClassLoader loader = loaders.get(recent);
-        if (loader == null) throw new IllegalStateException("No jar loaded for recent key: " + recent);
-        return loader;
-    }
-
-    public JSONObject jsonExt(String key, LinkedHashMap<String, String> jxs, String url) throws Throwable {
-        Class<?> clz = requireRecentLoader().loadClass("com.github.catvod.parser.Json" + key);
-        Method method = clz.getMethod("parse", LinkedHashMap.class, String.class);
-        return (JSONObject) method.invoke(null, jxs, url);
-    }
-
-    public JSONObject jsonExtMix(String flag, String key, String name, LinkedHashMap<String, HashMap<String, String>> jxs, String url) throws Throwable {
-        Class<?> clz = requireRecentLoader().loadClass("com.github.catvod.parser.Mix" + key);
-        Method method = clz.getMethod("parse", LinkedHashMap.class, String.class, String.class, String.class);
-        return (JSONObject) method.invoke(null, jxs, name, flag, url);
-    }
-
-    public Object[] proxy(Map<String, String> params) throws Exception {
-        ProxyMethod method = recent != null ? methods.get(recent) : null;
-        Object[] result = proxyInvoke(method, params);
-        if (result != null) return result;
-        return tryOthers(params);
-    }
-
-    private Object[] tryOthers(Map<String, String> p) {
-        return methods.entrySet().stream().filter(e -> !e.getKey().equals(recent)).map(e -> proxyInvoke(e.getValue(), p)).filter(Objects::nonNull).findFirst().orElse(null);
-    }
-
-    private Object[] proxyInvoke(ProxyMethod proxy, Map<String, String> params) {
         try {
-            if (proxy == null) return null;
-            if (proxy.compat != null && "pan".equals(params.get("do"))) {
-                return proxy.compat.invoke(() -> (Object[]) proxy.method.invoke(null, params));
-            }
-            return (Object[]) proxy.method.invoke(null, params);
+            String jaKey = md5(jar);
+            String spKey = jaKey + key;
+            Spider cached = spiders.get(spKey);
+            if (cached != null) return cached;
+
+            parseJar(jaKey, jar);
+            DexClassLoader loader = loaders.get(jaKey);
+            if (loader == null) return new SpiderNull();
+
+            String clsName = "com.github.catvod.spider." + api.split("csp_")[1];
+            Spider spider = (Spider) loader.loadClass(clsName).newInstance();
+            spider.siteKey = key;
+            spider.init(App.context(), ext == null ? "" : ext);
+            spiders.put(spKey, spider);
+            return spider;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return new SpiderNull();
+        }
+    }
+
+    public Object[] proxy(Map<String, String> params) {
+        try {
+            Method m = recent != null ? proxyMethods.get(recent) : null;
+            if (m == null && !proxyMethods.isEmpty()) m = proxyMethods.values().iterator().next();
+            if (m == null) return null;
+            return (Object[]) m.invoke(null, params);
         } catch (Throwable e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    private record ProxyMethod(Method method, PanProxyCompat compat) {
-        void close() {
-            if (compat != null) compat.close();
+    // ===== helpers =====
+
+    private File download(String url) {
+        try {
+            File dir = new File(App.context().getCacheDir(), "catvod_jar");
+            if (!dir.exists()) dir.mkdirs();
+            File out = new File(dir, md5(url) + ".jar");
+            if (out.exists() && out.length() > 0) return out;
+
+            OkHttpClient client = new OkHttpClient.Builder().build();
+            Request req = new Request.Builder().url(url).build();
+            try (Response resp = client.newCall(req).execute()) {
+                if (!resp.isSuccessful() || resp.body() == null) return null;
+                byte[] bytes = resp.body().bytes();
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
+                fos.write(bytes);
+                fos.close();
+            }
+            return out;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private String toLocalPath(String fileUrl) {
+        // file://xxx or file:xxx -> 绝对路径（结合配置目录由调用方处理，这里简单剥壳）
+        String p = fileUrl.replaceFirst("^file://", "").replaceFirst("^file:", "");
+        return p;
+    }
+
+    public static String md5(String s) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] d = md.digest(s.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : d) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Throwable e) {
+            return String.valueOf(s.hashCode());
         }
     }
 }

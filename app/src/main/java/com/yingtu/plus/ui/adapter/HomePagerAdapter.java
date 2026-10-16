@@ -1,4 +1,4 @@
-package com.yingtu.plus.com.yingtu.plus.ui.adapter;
+package com.yingtu.plus.ui.adapter;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;

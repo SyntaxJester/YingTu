@@ -1,4 +1,4 @@
-package com.yingtu.plus.com.yingtu.plus.base;
+package com.yingtu.plus.base;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
