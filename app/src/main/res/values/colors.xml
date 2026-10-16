@@ -58,7 +58,6 @@
     <color name="bg_remark">#B3000000</color>
     <color name="bg_site">#33FFFFFF</color>
     <color name="bg_year">#B3000000</color>
-    <color name="mipmap_background">#00000000</color>
     <color name="startup_background">#17678A</color>
 
     <!-- 同步设备 -->
