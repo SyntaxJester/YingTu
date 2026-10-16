@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     namespace 'com.yingtu.plus'
-    compileSdk 34
+    compileSdk 37
     
     defaultConfig {
         applicationId "com.yingtu.plus"
