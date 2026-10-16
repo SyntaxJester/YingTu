@@ -206,6 +206,3 @@ public class Danmaku {
     @Override
     public String toString() {
         return App.gson().toJson(this);
-    }
-}
-}

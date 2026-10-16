@@ -398,4 +398,3 @@ public class Live {
         return getName().equals(it.getName());
     }
 }
-}}
