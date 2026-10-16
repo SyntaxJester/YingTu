@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- 自定义属性 -->
     <declare-styleable name="CustomAttrs">
         <attr name="exampleString" format="string" />
         <attr name="exampleDimension" format="dimension" />
@@ -9,5 +10,21 @@
         <attr name="exampleInt" format="integer" />
         <attr name="exampleFloat" format="float" />
         <attr name="exampleFraction" format="fraction" />
+    </declare-styleable>
+
+    <!-- PlayerView 自定义属性 -->
+    <declare-styleable name="PlayerView">
+        <attr name="use_controller" format="boolean" />
+        <attr name="surface_type" format="enum">
+            <enum name="surface_view" value="0" />
+            <enum name="texture_view" value="1" />
+        </attr>
+        <attr name="shutter_background_color" format="color" />
+        <attr name="resize_mode" format="enum">
+            <enum name="fit" value="0" />
+            <enum name="fill" value="1" />
+            <enum name="zoom" value="2" />
+        </attr>
+        <attr name="keep_content_on_player_reset" format="boolean" />
     </declare-styleable>
 </resources>
