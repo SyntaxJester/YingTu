@@ -16,8 +16,7 @@ import com.yingtu.plus.util.HawkConfig;
 import com.yingtu.plus.web.WebServer;
 import com.orhanobut.hawk.Hawk;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * 应用入口。初始化全局单例、持久化存储与源配置管理器。
@@ -30,7 +29,6 @@ public class App extends Application {
 
     /** 前台 Activity 跟踪（生命周期回调）。 */
     private Activity currentActivity;
-    private final Map<String, Integer> activityStack = new ConcurrentHashMap<>();
 
     @Override
     public void onCreate() {

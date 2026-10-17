@@ -207,4 +207,4 @@ public class Danmaku {
     public String toString() {
         return App.gson().toJson(this);
 }
-}}
+}
