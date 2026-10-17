@@ -49,4 +49,8 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.simpleframework:simple-xml:2.7.1'
     implementation 'com.orhanobut:hawk:2.0.1'
+    implementation 'com.google.guava:guava:33.3.1-android'
+    implementation 'org.jupnp:org.jupnp:2.6.1'
+    implementation 'com.github.jahirfiquitiva.libs.textdrawable:textdrawable:1.0.3'
+    implementation 'com.permissionx.guolindev:permissionx:1.7.1'
 }
